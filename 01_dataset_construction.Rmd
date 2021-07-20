@@ -1,0 +1,442 @@
+---
+title: "Dataset 1 and 2 modification - PNAS"
+author: "Balazs Koncz"
+date: '2021 04 09 '
+output: html_document
+---
+#Setup
+
+```{r include=FALSE}
+setwd("D:/CloudStation/mygit/ImObsRecognition/")
+library(dplyr)
+library(magrittr)
+library(pbapply)
+library(fastmatch)
+library(data.table)
+library(protr)
+library(stringi)
+```
+
+#Dataset 1 assembly
+##T cell activation assays
+
+```{r}
+tcell_full = fread("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tcell_full_v3.csv", skip = 1) #370.269
+tcell_full = tcell_full[,c(125,12,1,11,106)]
+colnames(tcell_full) = c("allele", "peptide", "assay", "object_type", "qualitative_measure")
+
+tcell_filt = tcell_full %>% 
+  filter(nchar(peptide) == 9 | nchar(peptide) == 10) %>% #84,137
+  filter(object_type == "Linear peptide") %>% #83,915
+  filter(substr(allele,1,5) == "HLA-A" | substr(allele,1,5) == "HLA-B" | substr(allele,1,5) == "HLA-C") %>% #56,386
+  filter(nchar(allele) == 11) %>% #48,658
+  dplyr::select(-object_type) %>% 
+  transform(allele = gsub("HLA-|:|\\*", "", allele))
+tcell_filt = tcell_filt[sapply(tcell_filt$peptide, function(x) protcheck(x)),] #48,651
+rm(tcell_full)
+
+activating = tcell_filt %>% 
+  mutate(qm = ifelse(qualitative_measure == "Negative", "neg", "pos")) %>% 
+  dplyr::select(-qualitative_measure) %>% 
+  group_by(allele, peptide, qm) %>% 
+  dplyr::summarise(n = n()) %>% 
+  tidyr::spread(key = qm, value = n) %>% 
+  mutate_at(vars(neg, pos), function(x) x = ifelse(is.na(x), 0, x)) %>% 
+  mutate(n_activating_assay = neg+pos) %>% 
+  mutate(activating_ratio = pos/n_activating_assay) %>%
+  ungroup() %>% 
+  dplyr::select(-c("neg", "pos")) #30,443
+rm(tcell_filt)
+```
+
+##Filter 0 - HLA binding
+
+```{r eval=FALSE, include=FALSE}
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects//binding_matrix")
+rownames(binding_matrix$aff) = gsub("HLA-|:", "", rownames(binding_matrix$aff))
+rownames(binding_matrix$rp) = gsub("HLA-|:", "", rownames(binding_matrix$rp))
+activating$aff = apply(activating,1,function(x) ifelse(x[1] %in% rownames(binding_matrix$aff), binding_matrix$aff[x[1],x[2]], NA))
+activating$bindingrp = apply(activating,1,function(x) ifelse(x[1] %in% rownames(binding_matrix$rp), binding_matrix$rp[x[1],x[2]], NA))
+#HLA-B44:01 prediction is missing
+rm(binding_matrix)
+ligands_raw_d1 = activating %>% 
+  filter(aff<500|bindingrp<2) %>% 
+  dplyr::select(allele, peptide, n_activating_assay, activating_ratio) #21,474
+```
+
+##Filter 1 (activating assay)
+
+```{r}
+ligands_raw_d1 %<>% 
+  filter(n_activating_assay >= 2) #5,630
+```
+
+##Filter 2 - Drop human peptides
+
+```{r}
+proteome = readFASTA("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta")
+tempdf = ligands_raw_d1 %>% dplyr::select(peptide) %>% unique()
+tempdf$human = pbsapply(tempdf$peptide, function(z) any(stri_detect_fixed(proteome, z))) #TRUE - human, FALSE - nonhuman
+table(tempdf$human) #Human: 827, nonhuman: 4,462
+humaneps = tempdf$peptide[tempdf$human == T]
+ligands_raw_d1 %<>% 
+  filter(!peptide %in% humaneps) #4,634
+rm(proteome, tempdf, humaneps)
+```
+
+##Filter 3 - peptide categorization - immunogenic vs. non-immunogenic
+
+```{r}
+load("01out/ligands_raw_d1")
+ligands_raw_d1$immunogenicity = NA
+ligands_raw_d1$immunogenicity[ligands_raw_d1$activating_ratio == 0] = 0
+ligands_raw_d1$immunogenicity[ligands_raw_d1$activating_ratio > .5] = 1
+ligands_raw_d1 %<>% na.omit() #4,118
+table(ligands_raw_d1$immunogenicity) #0 - 2,617; 1 - 1,501
+```
+
+##Filter 4 - peptide-unique
+
+```{r}
+#Controversial assay results
+length(unique(ligands_raw_d1$peptide[duplicated(ligands_raw_d1$peptide)])) #95
+#ligands_raw_d1 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
+drop_eps = ligands_raw_d1 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #13 peptides/95
+#writeLines(drop_eps, "01out/dropped_peptides.txt")
+ligands_raw_d1 %<>% filter(!peptide %in% drop_eps) #4,089
+rm(drop_eps)
+
+#Epitope unique
+eps = unique(ligands_raw_d1$peptide) #3,955
+for(j in 1:length(eps)) {
+  tempdf = ligands_raw_d1 %>% filter(peptide == eps[j])
+  if(nrow(tempdf) == 1) next()
+  tempdf = tempdf[which.max(tempdf$n_activating_assay),]
+  ligands_raw_d1[ligands_raw_d1$peptide == eps[j],] = tempdf
+}
+rm(eps, tempdf, j)
+ligands_raw_d1 = unique(ligands_raw_d1) #3,955
+
+ligands_raw_d1$immunogenicity = factor(ligands_raw_d1$immunogenicity, levels = c("1","0"))
+```
+
+#Dataset 2 assembly
+##Binding assays
+
+```{r}
+mhc_ligand_full = fread("D:/CloudStation/mygit_EXT/ImObsRecognition//objects/mhc_ligand_full.csv", skip = 1) #1,314,881
+mhc_ligand_full = mhc_ligand_full[,c(96,12,1,11,84)]
+colnames(mhc_ligand_full) = c("allele", "peptide", "assay", "object_type", "qualitative_measure")
+
+mhc_ligand_filt = mhc_ligand_full %>%
+  filter(nchar(peptide) == 9 | nchar(peptide) == 10) %>% #826,354
+  filter(object_type == "Linear peptide") %>% #826,313
+  filter(substr(allele,1,5) == "HLA-A" | substr(allele,1,5) == "HLA-B" | substr(allele,1,5) == "HLA-C") %>% #493,403
+  filter(nchar(allele) == 11) %>% #469,430
+  dplyr::select(-object_type) %>% 
+  transform(allele = gsub("HLA-|:|\\*", "", allele))
+mhc_ligand_filt = mhc_ligand_filt[sapply(mhc_ligand_filt$peptide, function(x) protcheck(x)),] #469,417
+rm(mhc_ligand_full)
+
+binding = mhc_ligand_filt %>% 
+  mutate(qm = ifelse(qualitative_measure == "Negative", "neg", "pos")) %>% 
+  dplyr::select(-qualitative_measure) %>% 
+  group_by(allele, peptide, qm) %>% 
+  dplyr::summarise(n = n()) %>% 
+  tidyr::spread(key = qm, value = n) %>% 
+  mutate_at(vars(neg, pos), function(x) x = ifelse(is.na(x), 0, x)) %>% 
+  mutate(n_binding_assay = neg+pos) %>% 
+  mutate(binding_ratio = pos/n_binding_assay) %>%
+  ungroup() %>% 
+  dplyr::select(-c("neg", "pos")) #320,055
+
+rm(mhc_ligand_filt)
+```
+
+##Combine with activating assays
+
+```{r}
+ligands_raw_d2 = binding %>% 
+  left_join(activating, by = c("allele", "peptide")) %>% 
+  filter(!is.na(activating_ratio)) #6936
+rm(activating, binding)
+ligands_raw_d2 %<>% 
+  filter(n_binding_assay >= 2, binding_ratio > 0.6) #2,345
+```
+
+##Filter 1 (binding assay, activating assay, binding ratio)
+
+```{r}
+ligands_raw_d2 %<>% 
+  filter(n_activating_assay >= 2) #1,506
+```
+
+##Filter 2 - Drop human peptides
+
+```{r}
+proteome = readFASTA("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta")
+tempdf = ligands_raw_d2 %>% dplyr::select(peptide) %>% unique()
+tempdf$human = pbsapply(tempdf$peptide, function(z) any(stri_detect_fixed(proteome, z))) #TRUE - human, FALSE - nonhuman
+table(tempdf$human) #Human: 187, nonhuman: 1,282
+humaneps = tempdf$peptide[tempdf$human == T]
+ligands_raw_d2 %<>% filter(!peptide %in% humaneps) #1,318
+rm(proteome, tempdf, humaneps)
+```
+
+##Filter 3 - peptide categorization - immunogenic vs. non-immunogenic
+
+```{r}
+ligands_raw_d2$immunogenicity = NA
+ligands_raw_d2$immunogenicity[ligands_raw_d2$activating_ratio == 0] = 0
+ligands_raw_d2$immunogenicity[ligands_raw_d2$activating_ratio > .5] = 1
+ligands_raw_d2 = ligands_raw_d2[!is.na(ligands_raw_d2$immunogenicity),] #1,117
+table(ligands_raw_d2$immunogenicity) #0 - 485; 1 - 632
+```
+
+##Filter 4 - peptide-unique
+
+```{r}
+#Controversial assay results
+length(unique(ligands_raw_d2$peptide[duplicated(ligands_raw_d2$peptide)]))
+#ligands_raw_d2 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
+drop_eps = ligands_raw_d2 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #1 peptide: YAQMWSLMY
+ligands_raw_d2 %<>% filter(!peptide %in% drop_eps) #1,115
+rm(drop_eps)
+
+#Epitope unique
+eps = unique(ligands_raw_d2$peptide) #1,087
+for(j in 1:length(eps)) {
+  tempdf = ligands_raw_d2 %>% filter(peptide == eps[j])
+  if(nrow(tempdf) == 1) next()
+  tempdf = tempdf[which.max(tempdf$n_activating_assay),]
+  ligands_raw_d2[ligands_raw_d2$peptide == eps[j],] = tempdf
+}
+rm(eps, tempdf, j)
+ligands_raw_d2 = unique(ligands_raw_d2) #1,087
+
+ligands_raw_d2$immunogenicity = factor(ligands_raw_d2$immunogenicity, levels = c("1","0"))
+```
+
+##Filter 5 - Clustal omega
+
+```{r}
+source("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/clustal_omega_function.R")
+dist_matr = clomega(epitopes = ligands_raw_d2$peptide, similarity = 0.5)
+ligands_raw_d2 %>% filter(!peptide %in% rownames(dist_matr)) %>% pull(peptide) -> dropped_peps_clo #452 peptides
+#writeLines(dropped_peps_clo, "01out/dropped_eps_clo_d2.txt")
+rm(dropped_peps_clo)
+
+ligands_nonhuman_d2 = ligands_raw_d2 %<>% 
+  filter(peptide %in% rownames(dist_matr)) #635
+rm(dist_matr, clomega)
+table(ligands_raw_d2$immunogenicity) #1: 360, 0: 275
+
+ligands_nonhuman_d1 = ligands_raw_d1[!ligands_raw_d1$peptide %in% ligands_nonhuman_d2$peptide,] #3,380
+table(ligands_nonhuman_d1$immunogenicity) #1 - 1,093; 0 - 2,287
+rm(ligands_raw_d1, ligands_raw_d2)
+```
+
+#Add other variables
+
+```{r}
+##TCEM frequency
+ligands_nonhuman_d1$tcem = unname(pbsapply(ligands_nonhuman_d1$peptide, function(x) ifelse(nchar(x) == 9, substr(x,4,8), substr(x,5,9))))
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem")
+ligands_nonhuman_d1$freqpenta_tcem = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) pentamerfreq_tcem[fmatch(x, names(pentamerfreq_tcem))]))
+rm(pentamerfreq_tcem)
+
+##Expression
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem")
+ligands_nonhuman_d1$pentamer_expression = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) median(expr_list[[fmatch(x, names(expr_list))]])))
+rm(expr_list)
+
+##Çleavage scores
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_tpr_normalized_with_division_median_two_sides")
+ligands_nonhuman_d1$thymopscore = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) median(score_list[[fmatch(x, names(score_list))]])))
+
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_ipr_normalized_with_division_median_two_sides")
+ligands_nonhuman_d1$immunopscore = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) median(score_list[[fmatch(x, names(score_list))]])))
+rm(score_list)
+
+#Blosum62 similarity score
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/bl62score")
+ligands_nonhuman_d1$bl62score = unname(bl62score[match(ligands_nonhuman_d1$peptide, names(bl62score))])
+rm(bl62score)
+
+#Housekeeping ratio
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tcem_housekeeping_stat")
+elements_housekeeping %<>% 
+  as.data.frame(stringsAsFactors = F) %>% 
+  mutate_at(2:3, as.numeric)
+ligands_nonhuman_d1$housekeeping_ratio = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) ifelse(x %in% elements_housekeeping$motif, elements_housekeeping$housekeeping[elements_housekeeping$motif == x] / (elements_housekeeping$housekeeping[elements_housekeeping$motif == x]+elements_housekeeping$`not housekeeping`[elements_housekeeping$motif == x]),NA)))
+rm(elements_housekeeping)
+
+ligands_nonhuman_d1 %<>% 
+  select(allele, peptide, immunogenicity, tcem, freqpenta_tcem, pentamer_expression, thymopscore, immunopscore, bl62score, housekeeping_ratio)
+save(ligands_nonhuman_d1, file = "ligands_nonhuman_d1")
+
+##TCEM frequency
+ligands_nonhuman_d2$tcem = unname(pbsapply(ligands_nonhuman_d2$peptide, function(x) ifelse(nchar(x) == 9, substr(x,4,8), substr(x,5,9))))
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem")
+ligands_nonhuman_d2$freqpenta_tcem = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) pentamerfreq_tcem[fmatch(x, names(pentamerfreq_tcem))]))
+rm(pentamerfreq_tcem)
+
+##Expression
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem")
+ligands_nonhuman_d2$pentamer_expression = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) median(expr_list[[fmatch(x, names(expr_list))]])))
+rm(expr_list)
+
+##Çleavage scores
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_tpr_normalized_with_division_median_two_sides")
+ligands_nonhuman_d2$thymopscore = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) median(score_list[[fmatch(x, names(score_list))]])))
+
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_ipr_normalized_with_division_median_two_sides")
+ligands_nonhuman_d2$immunopscore = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) median(score_list[[fmatch(x, names(score_list))]])))
+rm(score_list)
+
+#Blosum62 similarity score
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/bl62score")
+ligands_nonhuman_d2$bl62score = unname(bl62score[match(ligands_nonhuman_d2$peptide, names(bl62score))])
+rm(bl62score)
+
+#Housekeeping ratio
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tcem_housekeeping_stat")
+elements_housekeeping %<>% 
+  as.data.frame(stringsAsFactors = F) %>% 
+  mutate_at(2:3, as.numeric)
+ligands_nonhuman_d2$housekeeping_ratio = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) ifelse(x %in% elements_housekeeping$motif, elements_housekeeping$housekeeping[elements_housekeeping$motif == x] / (elements_housekeeping$housekeeping[elements_housekeeping$motif == x]+elements_housekeeping$`not housekeeping`[elements_housekeeping$motif == x]),NA)))
+rm(elements_housekeeping)
+
+ligands_nonhuman_d2 %<>% 
+  select(allele, peptide, immunogenicity, tcem, freqpenta_tcem, pentamer_expression, thymopscore, immunopscore, bl62score, housekeeping_ratio)
+save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2")
+
+```
+
+#Create datasets for supplementary
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+dataset_1 = cbind(ligands_nonhuman[,c("allele", "peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
+load("objects/ligands_nonhuman_d2")
+dataset_2 = cbind(ligands_nonhuman[,c("allele", "peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
+rm(ligands_nonhuman)
+
+#For FigS4 housekeeping ratio - pentamer expression group
+nb_of_groups = 20
+dataset_1$pentamer_expression_group = cut(dataset_1$pentamer_expression, unique(quantile(dataset_1$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
+table(dataset_1$pentamer_expression_group)
+dataset_2$pentamer_expression_group = cut(dataset_2$pentamer_expression, unique(quantile(dataset_2$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
+table(dataset_2$pentamer_expression_group)
+rm(nb_of_groups)
+
+#For Fig3B similarity group
+datasets = rbind(dataset_1, dataset_2)
+datasets$bl62score_group = cut(datasets$bl62score, 25)
+table(datasets$bl62score_group)
+
+#For FigS seconday anchors
+load("01out/activating_d1")
+secanc_alleles = c("A0203","A0204","A0206","A0301","A2501","A2902","A6802",  
+                   "B0801", "B1402","B1517", "B3701","B4601", 
+                   "C0602","C0704", "C1502", "C1701")
+datasets$secanc = FALSE
+for(i in 1:nrow(datasets)) {
+  if(datasets$allele[i] %in% secanc_alleles) {
+    other_alleles = setdiff(activating$allele[activating$peptide == datasets$peptide[i]],datasets$allele[i])
+    if(length(other_alleles) == 0) {
+      datasets$secanc[i] = TRUE
+    } else if(length(other_alleles) > 0) {
+      if(all(other_alleles %in% secanc_alleles)) {
+        datasets$secanc[i] = TRUE
+      }
+    }
+  }
+}
+table(datasets$secanc)
+table(datasets$secanc[datasets$dataset == "d1"])
+table(datasets$secanc[datasets$dataset == "d2"])
+
+
+
+#D1
+ligands_nonhuman = datasets[datasets$dataset == "d1",c("peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "pentamer_expression_group", "thymopscore", "immunopscore", "bl62score", "bl62score_group", "housekeeping_ratio", "secanc")]
+ligands_nonhuman %<>% mutate_at(c(5,7,8,9,11), function(x) round(x,3))
+write.table(ligands_nonhuman, file = "01out/ligands_nonhuman_d1.txt", quote = F, sep = "\t", dec = ".", row.names = F)
+
+#D2
+ligands_nonhuman = datasets[datasets$dataset == "d2",c("peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "pentamer_expression_group", "thymopscore", "immunopscore", "bl62score", "bl62score_group", "housekeeping_ratio", "secanc")]
+ligands_nonhuman %<>% mutate_at(c(5,7,8,9,11), function(x) round(x,3))
+write.table(ligands_nonhuman, file = "01out/ligands_nonhuman_d2.txt", quote = F, sep = "\t", dec = ".", row.names = F)
+
+```
+
+
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+dataset_1 = cbind(ligands_nonhuman[,c("allele", "peptide", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
+load("objects/ligands_nonhuman_d2")
+dataset_2 = cbind(ligands_nonhuman[,c("allele", "peptide", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
+ligands_nonhuman = rbind(dataset_1, dataset_2)
+rm(dataset_1, dataset_2)
+ligands_nonhuman %<>% 
+    mutate(group = case_when(
+    .$dataset == "d1" & .$immunogenicity == 0 ~ "d1_nim",
+    .$dataset == "d1" & .$immunogenicity == 1 ~ "d1_im",
+    .$dataset == "d2" & .$immunogenicity == 0 ~ "d2_nim",
+    .$dataset == "d2" & .$immunogenicity == 1 ~ "d2_im",
+  )) %>% 
+  transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
+save(ligands_nonhuman, file = "objects/ligands_nonhuman_d1d2") #4015
+```
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+load("objects/ligands_nonhuman_d2")
+
+ligands_nonhuman %>% group_by(immunogenicity) %>% summarize(m = median(freqpenta_tcem))
+wilcox.test(freqpenta_tcem ~ immunogenicity, ligands_nonhuman)
+ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+fisher.test(matrix(c(
+  ligands_nonhuman %>% filter(immunogenicity == 0, freqpenta_tcem_group == 2) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, freqpenta_tcem_group == 2) %>% nrow(), 
+  ligands_nonhuman %>% filter(immunogenicity == 0, freqpenta_tcem_group == 1) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, freqpenta_tcem_group == 1) %>% nrow()),
+  nrow = 2, ncol = 2))
+ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+fisher.test(matrix(c(
+  ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 2, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 2, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(), 
+  ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 1, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 1, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow()),
+  nrow = 2, ncol = 2))
+fisher.test(matrix(c(
+  ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 2, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 2, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(), 
+  ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 3, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 3, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow()),
+  nrow = 2, ncol = 2))
+ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+wilcox.test(thymopscore ~ immunogenicity, ligands_nonhuman)
+fisher.test(matrix(c(
+  ligands_nonhuman %>% filter(immunogenicity == 0, thymopscore_group == 2) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, thymopscore_group == 2) %>% nrow(), 
+  ligands_nonhuman %>% filter(immunogenicity == 0, thymopscore_group == 1) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, thymopscore_group == 1) %>% nrow()),
+  nrow = 2, ncol = 2))
+
+ligands_nonhuman$immunopscore_group = cut(x = ligands_nonhuman$immunopscore, breaks = quantile(ligands_nonhuman$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+wilcox.test(immunopscore ~ immunogenicity, ligands_nonhuman)
+fisher.test(matrix(c(
+  ligands_nonhuman %>% filter(immunogenicity == 0, immunopscore_group == 2) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, immunopscore_group == 2) %>% nrow(), 
+  ligands_nonhuman %>% filter(immunogenicity == 0, immunopscore_group == 1) %>% nrow(),
+  ligands_nonhuman %>% filter(immunogenicity == 1, immunopscore_group == 1) %>% nrow()),
+  nrow = 2, ncol = 2))
+
+
+
+
+```
+
