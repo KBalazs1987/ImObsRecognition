@@ -221,7 +221,7 @@ ligands_raw_d2$immunogenicity = factor(ligands_raw_d2$immunogenicity, levels = c
 ##Filter 5 - Clustal omega
 
 ```{r}
-source("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/clustal_omega_function.R")
+source("D:/CloudStation/mygit_EXT/ImObsRecognition/clustal_omega_function.R")
 dist_matr = clomega(epitopes = ligands_raw_d2$peptide, similarity = 0.5)
 ligands_raw_d2 %>% filter(!peptide %in% rownames(dist_matr)) %>% pull(peptide) -> dropped_peps_clo #452 peptides
 #writeLines(dropped_peps_clo, "01out/dropped_eps_clo_d2.txt")
