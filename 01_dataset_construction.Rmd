@@ -1,5 +1,5 @@
 ---
-title: "Dataset 1 and 2 modification - PNAS"
+title: "Dataset 1 and 2 creation"
 author: "Balazs Koncz"
 date: '2021 04 09 '
 output: html_document
@@ -47,6 +47,7 @@ activating = tcell_filt %>%
   ungroup() %>% 
   dplyr::select(-c("neg", "pos")) #30,443
 rm(tcell_filt)
+save(activating, file = "activating_d1")
 ```
 
 ##Filter 0 - HLA binding
@@ -313,30 +314,28 @@ save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2")
 
 ```
 
-#Create datasets for supplementary
+#Create datasets for supplementary table (dataset 1)
 
 ```{r}
-load("objects/ligands_nonhuman_d1")
-dataset_1 = cbind(ligands_nonhuman[,c("allele", "peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
-load("objects/ligands_nonhuman_d2")
-dataset_2 = cbind(ligands_nonhuman[,c("allele", "peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
-rm(ligands_nonhuman)
+load("ligands_nonhuman_d1")
+ligands_nonhuman_d1 = cbind(ligands_nonhuman_d1, dataset = "d1")
+load("ligands_nonhuman_d2")
+ligands_nonhuman_d2 = cbind(ligands_nonhuman_d2, dataset = "d2")
 
-#For FigS4 housekeeping ratio - pentamer expression group
+#For FigS5 housekeeping ratio - pentamer expression group
 nb_of_groups = 20
-dataset_1$pentamer_expression_group = cut(dataset_1$pentamer_expression, unique(quantile(dataset_1$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
-table(dataset_1$pentamer_expression_group)
-dataset_2$pentamer_expression_group = cut(dataset_2$pentamer_expression, unique(quantile(dataset_2$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
-table(dataset_2$pentamer_expression_group)
+ligands_nonhuman_d1$pentamer_expression_group = cut(ligands_nonhuman_d1$pentamer_expression, unique(quantile(ligands_nonhuman_d1$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
+table(ligands_nonhuman_d1$pentamer_expression_group)
+ligands_nonhuman_d2$pentamer_expression_group = cut(ligands_nonhuman_d2$pentamer_expression, unique(quantile(ligands_nonhuman_d2$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
+table(ligands_nonhuman_d2$pentamer_expression_group)
 rm(nb_of_groups)
 
 #For Fig3B similarity group
-datasets = rbind(dataset_1, dataset_2)
+datasets = rbind(ligands_nonhuman_d1, ligands_nonhuman_d2)
 datasets$bl62score_group = cut(datasets$bl62score, 25)
-table(datasets$bl62score_group)
 
 #For FigS seconday anchors
-load("01out/activating_d1")
+load("activating_d1")
 secanc_alleles = c("A0203","A0204","A0206","A0301","A2501","A2902","A6802",  
                    "B0801", "B1402","B1517", "B3701","B4601", 
                    "C0602","C0704", "C1502", "C1701")
@@ -357,29 +356,27 @@ table(datasets$secanc)
 table(datasets$secanc[datasets$dataset == "d1"])
 table(datasets$secanc[datasets$dataset == "d2"])
 
-
-
 #D1
 ligands_nonhuman = datasets[datasets$dataset == "d1",c("peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "pentamer_expression_group", "thymopscore", "immunopscore", "bl62score", "bl62score_group", "housekeeping_ratio", "secanc")]
 ligands_nonhuman %<>% mutate_at(c(5,7,8,9,11), function(x) round(x,3))
-write.table(ligands_nonhuman, file = "01out/ligands_nonhuman_d1.txt", quote = F, sep = "\t", dec = ".", row.names = F)
+#write.table(ligands_nonhuman, file = "ligands_nonhuman_d1.txt", quote = F, sep = "\t", dec = ".", row.names = F)
 
 #D2
 ligands_nonhuman = datasets[datasets$dataset == "d2",c("peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "pentamer_expression_group", "thymopscore", "immunopscore", "bl62score", "bl62score_group", "housekeeping_ratio", "secanc")]
 ligands_nonhuman %<>% mutate_at(c(5,7,8,9,11), function(x) round(x,3))
-write.table(ligands_nonhuman, file = "01out/ligands_nonhuman_d2.txt", quote = F, sep = "\t", dec = ".", row.names = F)
+#write.table(ligands_nonhuman, file = "ligands_nonhuman_d2.txt", quote = F, sep = "\t", dec = ".", row.names = F)
 
 ```
 
-
+#D1 & D2
 
 ```{r}
-load("objects/ligands_nonhuman_d1")
-dataset_1 = cbind(ligands_nonhuman[,c("allele", "peptide", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
-load("objects/ligands_nonhuman_d2")
-dataset_2 = cbind(ligands_nonhuman[,c("allele", "peptide", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
-ligands_nonhuman = rbind(dataset_1, dataset_2)
-rm(dataset_1, dataset_2)
+load("ligands_nonhuman_d1")
+ligands_nonhuman_d1 = cbind(ligands_nonhuman_d1, dataset = "d1")
+load("ligands_nonhuman_d2")
+ligands_nonhuman_d2 = cbind(ligands_nonhuman_d2, dataset = "d2")
+ligands_nonhuman = rbind(ligands_nonhuman_d1, ligands_nonhuman_d2)
+rm(ligands_nonhuman_d1, ligands_nonhuman_d2)
 ligands_nonhuman %<>% 
     mutate(group = case_when(
     .$dataset == "d1" & .$immunogenicity == 0 ~ "d1_nim",
@@ -388,55 +385,5 @@ ligands_nonhuman %<>%
     .$dataset == "d2" & .$immunogenicity == 1 ~ "d2_im",
   )) %>% 
   transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
-save(ligands_nonhuman, file = "objects/ligands_nonhuman_d1d2") #4015
+save(ligands_nonhuman, file = "ligands_nonhuman_d1d2") #4015
 ```
-
-```{r}
-load("objects/ligands_nonhuman_d1")
-load("objects/ligands_nonhuman_d2")
-
-ligands_nonhuman %>% group_by(immunogenicity) %>% summarize(m = median(freqpenta_tcem))
-wilcox.test(freqpenta_tcem ~ immunogenicity, ligands_nonhuman)
-ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
-fisher.test(matrix(c(
-  ligands_nonhuman %>% filter(immunogenicity == 0, freqpenta_tcem_group == 2) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, freqpenta_tcem_group == 2) %>% nrow(), 
-  ligands_nonhuman %>% filter(immunogenicity == 0, freqpenta_tcem_group == 1) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, freqpenta_tcem_group == 1) %>% nrow()),
-  nrow = 2, ncol = 2))
-ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
-fisher.test(matrix(c(
-  ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 2, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 2, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(), 
-  ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 1, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 1, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow()),
-  nrow = 2, ncol = 2))
-fisher.test(matrix(c(
-  ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 2, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 2, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(), 
-  ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 3, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 3, !is.na(immunogenicity), !is.na(pentamer_expression_group)) %>% nrow()),
-  nrow = 2, ncol = 2))
-ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-wilcox.test(thymopscore ~ immunogenicity, ligands_nonhuman)
-fisher.test(matrix(c(
-  ligands_nonhuman %>% filter(immunogenicity == 0, thymopscore_group == 2) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, thymopscore_group == 2) %>% nrow(), 
-  ligands_nonhuman %>% filter(immunogenicity == 0, thymopscore_group == 1) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, thymopscore_group == 1) %>% nrow()),
-  nrow = 2, ncol = 2))
-
-ligands_nonhuman$immunopscore_group = cut(x = ligands_nonhuman$immunopscore, breaks = quantile(ligands_nonhuman$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-wilcox.test(immunopscore ~ immunogenicity, ligands_nonhuman)
-fisher.test(matrix(c(
-  ligands_nonhuman %>% filter(immunogenicity == 0, immunopscore_group == 2) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, immunopscore_group == 2) %>% nrow(), 
-  ligands_nonhuman %>% filter(immunogenicity == 0, immunopscore_group == 1) %>% nrow(),
-  ligands_nonhuman %>% filter(immunogenicity == 1, immunopscore_group == 1) %>% nrow()),
-  nrow = 2, ncol = 2))
-
-
-
-
-```
-
