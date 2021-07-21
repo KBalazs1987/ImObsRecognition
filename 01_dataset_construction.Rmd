@@ -53,7 +53,7 @@ save(activating, file = "activating_d1")
 ##Filter 0 - HLA binding
 
 ```{r eval=FALSE, include=FALSE}
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects//binding_matrix")
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/binding_matrix")
 rownames(binding_matrix$aff) = gsub("HLA-|:", "", rownames(binding_matrix$aff))
 rownames(binding_matrix$rp) = gsub("HLA-|:", "", rownames(binding_matrix$rp))
 activating$aff = apply(activating,1,function(x) ifelse(x[1] %in% rownames(binding_matrix$aff), binding_matrix$aff[x[1],x[2]], NA))
@@ -88,7 +88,6 @@ rm(proteome, tempdf, humaneps)
 ##Filter 3 - peptide categorization - immunogenic vs. non-immunogenic
 
 ```{r}
-load("01out/ligands_raw_d1")
 ligands_raw_d1$immunogenicity = NA
 ligands_raw_d1$immunogenicity[ligands_raw_d1$activating_ratio == 0] = 0
 ligands_raw_d1$immunogenicity[ligands_raw_d1$activating_ratio > .5] = 1
@@ -224,7 +223,7 @@ ligands_raw_d2$immunogenicity = factor(ligands_raw_d2$immunogenicity, levels = c
 source("D:/CloudStation/mygit_EXT/ImObsRecognition/clustal_omega_function.R")
 dist_matr = clomega(epitopes = ligands_raw_d2$peptide, similarity = 0.5)
 ligands_raw_d2 %>% filter(!peptide %in% rownames(dist_matr)) %>% pull(peptide) -> dropped_peps_clo #452 peptides
-#writeLines(dropped_peps_clo, "01out/dropped_eps_clo_d2.txt")
+#writeLines(dropped_peps_clo, "01out/dropped_peps_clo_d2.txt")
 rm(dropped_peps_clo)
 
 ligands_nonhuman_d2 = ligands_raw_d2 %<>% 
