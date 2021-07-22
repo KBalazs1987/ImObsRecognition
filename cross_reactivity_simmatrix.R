@@ -8,17 +8,16 @@ aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AA
 }
 
 load("ligands_nonhuman_d1d2")
-
 ligands_nonhuman$group = 0
 ligands_nonhuman$group[ligands_nonhuman$freqpenta_tcem < 4 & ligands_nonhuman$pentamer_expression < quantile(ligands_nonhuman$pentamer_expression,0.15,na.rm = T) & ligands_nonhuman$thymopscore < quantile(ligands_nonhuman$thymopscore,0.25,na.rm = T)] = 1
 ligands_nonhuman$group[ligands_nonhuman$freqpenta_tcem >= 4 & (ligands_nonhuman$pentamer_expression >= quantile(ligands_nonhuman$pentamer_expression,0.15,na.rm = T) & ligands_nonhuman$pentamer_expression <= quantile(ligands_nonhuman$pentamer_expression,0.75,na.rm = T)) & ligands_nonhuman$thymopscore > quantile(ligands_nonhuman$thymopscore,0.25,na.rm = T)] = 2
 table(ligands_nonhuman$group)
 
-#TCEM-ek, amikre nem várunk pozitivan szelektalodott T-sejteket
-nptcemsd12 = unique(unname(ligands_nonhuman[ligands_nonhuman$group == 1 & ligands_nonhuman$trig == 0,"tcem"])) #
+#1 - it is the least likely to find specific positively selected T cells in the repertoire
+nptcemsd12 = unique(unname(ligands_nonhuman[ligands_nonhuman$group == 1 & ligands_nonhuman$immunogenicity == 0,"tcem"])) #it is the least likely to find specific positively selected T cells in the repertoire
 nptcemsd12_self = sapply(nptcemsd12, FUN = function(s) aLign(s, s))
 
-#REFERENCE TCEM SET - amire varunk pozitivan szelektalodott T sejtet
+#2 - we expected to find specific T cells in the repertoire
 load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem")
 load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem")
 exprmeds = pbsapply(expr_list, function(x) median(x))
@@ -33,10 +32,11 @@ pentamerfreq_tcem = pentamerfreq_tcem[keeptcems]
 exprmeds = exprmeds[keeptcems]
 thymomeds = thymomeds[keeptcems]
 
-imtcems = names(pentamerfreq_tcem)[pentamerfreq_tcem > 3 & exprmeds >= exprcutoff[1] & exprmeds <= exprcutoff[2] & thymomeds >= thymocutoff]
+imtcems = names(pentamerfreq_tcem)[pentamerfreq_tcem > 3 & exprmeds >= exprcutoff[1] & exprmeds <= exprcutoff[2] & thymomeds >= thymocutoff] #we expected to find specific T cells in the repertoire
 rm(exprcutoff, exprmeds, keeptcems, pentamerfreq_tcem, thymocutoff, thymomeds, ligands_nonhuman)
 imtcems_self = sapply(imtcems, FUN = function(s) aLign(s, s))
 
+#Calculate similarity values
 no_cores = detectCores()-1
 c1 = makeCluster(no_cores)
 simmatrix = matrix(NA, nrow = length(imtcems), ncol = length(nptcemsd12), dimnames = list(imtcems,nptcemsd12))
