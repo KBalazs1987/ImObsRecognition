@@ -15,6 +15,7 @@ library(fastmatch)
 library(data.table)
 library(protr)
 library(stringi)
+library(Rfast)
 ```
 
 #Dataset 1 assembly
@@ -235,6 +236,30 @@ ligands_nonhuman_d1 = ligands_raw_d1[!ligands_raw_d1$peptide %in% ligands_nonhum
 table(ligands_nonhuman_d1$immunogenicity) #1 - 1,093; 0 - 2,287
 rm(ligands_raw_d1, ligands_raw_d2)
 ```
+
+#Pentamer frequency
+
+```{r}
+proteome = readFASTA("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta")
+nonamers = sapply(proteome, function(x) substring(x, 1:(nchar(x)-8), 9:nchar(x)))
+nonamers = unlist(nonamers, use.names = F)
+nonamers = nonamers[nchar(nonamers) == 9]
+tcems = substr(nonamers,4,8)
+tcems = tcems[!grepl("U", tcems)]
+
+pfreqs = Table(tcems)
+pentamers = tidyr::unite(data = expand.grid(rownames(AABLOSUM62),rownames(AABLOSUM62),rownames(AABLOSUM62),rownames(AABLOSUM62),rownames(AABLOSUM62)), col = "pentamer", sep = "")
+pentamers = pentamers$pentamer
+
+zerofreqs = rep(0, length(pentamers)-length(pfreqs))
+names(zerofreqs) = setdiff(pentamers, names(pfreqs))
+
+pentamerfreq_tcem = c(pfreqs, zerofreqs)
+pentamerfreq_tcem = pentamerfreq_tcem[pentamers]
+
+save(pentamerfreq_tcem, file = "D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem")
+```
+
 
 #Sequence similarity
 
