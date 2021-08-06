@@ -32,6 +32,11 @@ library(protr)
 library(forestmodel)
 library(fastmatch)
 library(tidyr)
+library(Biostrings)
+library(foreach)
+library(doParallel)
+library(factoextra)
+library(FactoMineR)
 mypal <- pal_npg("nrc", alpha = 0.7)(9)
 mypal
 rm(mypal)
@@ -291,39 +296,53 @@ margin45 = theme(plot.margin = unit(c(.1,.1,.1,.25), "cm"))
 fig1 = grid.arrange(grobs = c(lapply(list(fig1_1, fig1_2, fig1_3), "+", margin12367), 
                               lapply(list(fig1_45), "+", margin45), 
                               lapply(list(fig1_6, fig1_7), "+", margin12367)), layout_matrix = lay)
-#ggsave(fig1, filename = "main_plots_rs/Fig1_25.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
-#ggsave(fig1, filename = "main_plots_rs/Fig1_25.png", width = 22, height = 10, units = "cm", dpi = "retina")
+#ggsave(fig1, filename = "Fig1.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
 ##Data calculation for Fig1D 
 
 ```{r}
 load("ligands_nonhuman_d1")
+ligands_nonhuman_d1$freqpenta_tcem_group = cut(x = ligands_nonhuman_d1$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d1$freqpenta_tcem),median(ligands_nonhuman_d1$freqpenta_tcem),max(ligands_nonhuman_d1$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$freqpenta_tcem_group)
+fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$freqpenta_tcem_group)
+
+ligands_nonhuman_d1$pentamer_expression_group = cut(x = ligands_nonhuman_d1$pentamer_expression, breaks = c(min(ligands_nonhuman_d1$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d1$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d1$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$pentamer_expression_group)
+fisher.test(ligands_nonhuman_d1$immunogenicity[ligands_nonhuman_d1$pentamer_expression_group %in% c(1,2)], ligands_nonhuman_d1$pentamer_expression_group[ligands_nonhuman_d1$pentamer_expression_group %in% c(1,2)])
+fisher.test(ligands_nonhuman_d1$immunogenicity[ligands_nonhuman_d1$pentamer_expression_group %in% c(2,3)], ligands_nonhuman_d1$pentamer_expression_group[ligands_nonhuman_d1$pentamer_expression_group %in% c(2,3)]) #OR were converted to 1/OR for Fig1D
+
+ligands_nonhuman_d1$thymopscore_group = cut(x = ligands_nonhuman_d1$thymopscore, breaks = quantile(ligands_nonhuman_d1$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$thymopscore_group)
+fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$thymopscore_group)
+
+ligands_nonhuman_d1$immunopscore_group = cut(x = ligands_nonhuman_d1$immunopscore, breaks = quantile(ligands_nonhuman_d1$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$immunopscore_group)
+fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$immunopscore_group)
+
 load("ligands_nonhuman_d2")
+ligands_nonhuman_d2$freqpenta_tcem_group = cut(x = ligands_nonhuman_d2$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d2$freqpenta_tcem),median(ligands_nonhuman_d2$freqpenta_tcem),max(ligands_nonhuman_d2$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$freqpenta_tcem_group)
+fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$freqpenta_tcem_group)
 
-ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #1: <median, 2: >= median. Median = 4.
-table(ligands_nonhuman$freqpenta_tcem_group)
-fisher.test(ligands_nonhuman$trig, ligands_nonhuman$freqpenta_tcem_group)
+ligands_nonhuman_d2$pentamer_expression_group = cut(x = ligands_nonhuman_d2$pentamer_expression, breaks = c(min(ligands_nonhuman_d2$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d2$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d2$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$pentamer_expression_group)
+fisher.test(ligands_nonhuman_d2$immunogenicity[ligands_nonhuman_d2$pentamer_expression_group %in% c(1,2)], ligands_nonhuman_d2$pentamer_expression_group[ligands_nonhuman_d2$pentamer_expression_group %in% c(1,2)])
+fisher.test(ligands_nonhuman_d2$immunogenicity[ligands_nonhuman_d2$pentamer_expression_group %in% c(2,3)], ligands_nonhuman_d2$pentamer_expression_group[ligands_nonhuman_d2$pentamer_expression_group %in% c(2,3)]) #OR were converted to 1/OR for Fig1D
 
-ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$pentamer_expression_group)
-fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(1,2)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(1,2)])
-fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(2,3)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(2,3)])
-#1/1.347172
-#1/1.818366
+ligands_nonhuman_d2$thymopscore_group = cut(x = ligands_nonhuman_d2$thymopscore, breaks = quantile(ligands_nonhuman_d2$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$thymopscore_group)
+fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$thymopscore_group)
 
-ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$thymopscore_group)
-fisher.test(ligands_nonhuman$trig, ligands_nonhuman$thymopscore_group)
+ligands_nonhuman_d2$immunopscore_group = cut(x = ligands_nonhuman_d2$immunopscore, breaks = quantile(ligands_nonhuman_d2$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$immunopscore_group)
+fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$immunopscore_group)
 
-ligands_nonhuman$immunopscore_group = cut(x = ligands_nonhuman$immunopscore, breaks = quantile(ligands_nonhuman$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$immunopscore_group)
-fisher.test(ligands_nonhuman$trig, ligands_nonhuman$immunopscore_group)
 ```
 
 thymocutoff = 0.914470
 
-#Fig2 - COVID
+#Fig2
 ##A TCEM
 
 ```{r}
@@ -476,7 +495,7 @@ rm(df_immuno, stat_individual)
 lay = rbind(c(1,2,3,4), c(1,2,3,4))
 margin = theme(plot.margin = unit(c(0.1,0.1,0.1,.3), "cm"))
 fig2 = grid.arrange(grobs = lapply(list(fig2a,fig2b,fig2c,fig2d), "+", margin), layout_matrix = lay)
-#ggsave(fig2, filename = "Fig2_9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+#ggsave(fig2, filename = "Fig2.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 
 rm(lay, margin)
 ```
@@ -603,11 +622,11 @@ rm(sars_simil)
 lay = rbind(c(1,1,2,2,2,2,3,3),c(1,1,2,2,2,2,3,3))
 margin = theme(plot.margin = unit(c(.1,.1,.1,.3), "cm"))
 fig3 = grid.arrange(grobs = lapply(list(fig3a, fig3b, fig3c), "+", margin), layout_matrix = lay)
-ggsave(fig3, filename = "main_plots_rs/Fig3_5.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+#ggsave(fig3, filename = "Fig3.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 rm(lay, margin)
 ```
 
-#Fig4 CROSSREACT
+#Fig4
 ##B
 
 ```{r}
@@ -724,10 +743,10 @@ fig4a = readPNG("main_plots_rs/Cross_reactivity_final.png")
 fig4a = rasterGrob(fig4a)
 
 fig4 = grid.arrange(fig4a, fig4b, fig4c, fig4d, nrow = 2, ncol = 2)
-ggsave(fig4, filename = "main_plots_rs/Fig4_20.pdf", width = 18, height = 18, units = "cm", dpi = "retina")
+#ggsave(fig4, filename = "Fig4.pdf", width = 18, height = 18, units = "cm", dpi = "retina")
 ```
 
-#Fig5 - OK
+#Fig5
 ##Objects
 
 ```{r}
@@ -947,7 +966,7 @@ lay = cbind(c(rep(1,5),rep(2,7),rep(3,2),rep(4,2)),
             c(rep(1,5),rep(2,7),rep(3,2),rep(4,2)),
             c(rep(1,5),rep(2,7),rep(3,2),rep(4,2)))
 fig5 = grid.arrange(grobs = list(fig5a,fig5b,fig5c,fig5d), layout_matrix = lay)
-ggsave(fig5, filename = "main_plots_rs/Fig5_50.pdf", width = 18, height = 22, units = "cm", dpi = "retina")
+#ggsave(fig5, filename = "Fig5.pdf", width = 18, height = 22, units = "cm", dpi = "retina")
 ```
 
 #FigS2
@@ -955,10 +974,7 @@ ggsave(fig5, filename = "main_plots_rs/Fig5_50.pdf", width = 18, height = 22, un
 Sequences of T cell activating and non-activating epitopes have similar diversity and amino acid constitution.
 
 ```{r}
-library(Biostrings)
-library(foreach)
-library(doParallel)
-load("objects/ligands_nonhuman_d2")
+load("ligands_nonhuman_d2")
 
 #Not trigger
 pss_nt = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$trig == 0]), cores = 6, submat = "BLOSUM62")
@@ -973,10 +989,8 @@ pss_t_values = pss_t[upper.tri(pss_t)]
 l2 = length(pss_t_values)
 
 pss = data.frame(nt = c(pss_nt_values, rep(NA, l2-l1)), t = pss_t_values)
-save(pss, file = "objects/pss_figs2")
-rm(ligands_nonhuman, pss_nt, pss_t, l1, l2, pss_nt_values, pss_t_values)
 
-load("objects/pss_figs2")
+#It is a long-time running
 Sys.time()
 figS2a <- ggplot(pss, aes(x=x)) +
   # Top
@@ -999,7 +1013,6 @@ figS2a <- ggplot(pss, aes(x=x)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 figS2a
-save(figS2a, file = "supp_plots_rs/figS2a_02")
 Sys.time()
 rm(pss)
 ```
@@ -1007,12 +1020,10 @@ rm(pss)
 ##MCA plot
 
 ```{r}
-library(factoextra)
-library(FactoMineR)
-load("objects/ligands_nonhuman_d2")
+load("ligands_nonhuman_d2")
 ligands_nonhuman_ds_2 = ligands_nonhuman[nchar(ligands_nonhuman$epitope) == 9,]
 rm(ligands_nonhuman)
-dropped_ep = readLines("01out/dropped_eps_clo_d2.txt")
+dropped_ep = readLines("dropped_eps_clo_d2.txt")
 load("objects/all_iedb")
 
 length(unique(c(ligands_nonhuman_ds_2$epitope, dropped_ep[nchar(dropped_ep) == 9])))
@@ -1105,20 +1116,17 @@ figS2c = ggplot(df_tcem, aes(x = Dim1, y = Dim2)) +
     legend.key.height = unit(.3,"cm"))
 figS2c
 
-save(figS2b, figS2c, file = "supp_plots_rs/figS2bc")
 rm(df_full, df_tcem)
 ```
 
 ##Combine
 
 ```{r}
-load("supp_plots_rs/figS2a_02")
-load("supp_plots_rs/figS2bc")
 lay = rbind(c(1,1,2,2),c(1,1,3,3))
 margin1 = theme(plot.margin = unit(c(.1,.1,.1,.1), "cm"))
 Sys.time()
 figS2 = grid.arrange(grobs = lapply(list(figS2a, figS2b, figS2c), "+", margin1), layout_matrix = lay)
-ggsave(figS2, filename = "supp_plots_rs/FigS2_17.png", width = 22, height = 13, units = "cm", dpi = "retina")
+#ggsave(figS2, filename = "FigS2.png", width = 22, height = 13, units = "cm", dpi = "retina")
 Sys.time()
 rm(lay, margin1)
 ```
@@ -1192,7 +1200,7 @@ ggplot(tcems_f, aes(x = freqpenta_tcem, color = tcemsource, fill = tcemsource)) 
     axis.line = element_line(colour = "black"),
     strip.background = element_blank(),
     strip.placement = "outside")
-ggsave("supp_plots_rs/FigS3_5.jpg", width = 14, height = 14, units = "cm", dpi = "retina")
+#ggsave("FigS3.jpg", width = 14, height = 14, units = "cm", dpi = "retina")
 
 rm(tcems)
 ```
@@ -1200,7 +1208,7 @@ rm(tcems)
 #FigS4 - MS ROC
 
 ```{r}
-load("20out/ms_data_corrected2")
+load("ms_data_corrected2")
 load("../objects/pentamerfreq_tcem")
 seqs_tcem = unique(ms_data$tcem[nchar(ms_data$Sequence) %in% c(9,10)]) #153,456
 pentamerfreq_tcem_roc = data.frame(tcem = names(pentamerfreq_tcem), freq = unname(pentamerfreq_tcem), group = 0)
@@ -1277,13 +1285,13 @@ margin1 = theme(plot.margin = unit(c(.2,.4,.2,.2), "cm"))
 margin2 = theme(plot.margin = unit(c(.2,.2,.27,.8), "cm"))
 figs4_ms = grid.arrange(grobs = c(lapply(list(figs_ms_1), "+", margin1), 
                               lapply(list(figs_ms_2), "+", margin2)), layout_matrix = lay)
-ggsave(figs4_ms, filename = "supp_plots_rs/figS4_ms_13.png", width = 20, height = 13, units = "cm", dpi = "retina")
+#ggsave(figs4_ms, filename = "figS4.png", width = 20, height = 13, units = "cm", dpi = "retina")
 ```
 
 #FigS5 - Housekeeping ratio
 
 ```{r}
-load("objects/ligands_nonhuman_d1")
+load("ligands_nonhuman_d1")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 nb_of_groups = 20
 
@@ -1315,7 +1323,7 @@ figS5a
 rm(ligands_nonhuman, tempdf)
 
 #D2
-load("objects/ligands_nonhuman_d2")
+load("ligands_nonhuman_d2")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$pentamer_expression_group = cut(ligands_nonhuman$pentamer_expression, unique(quantile(ligands_nonhuman$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
 table(ligands_nonhuman$pentamer_expression_group)
@@ -1346,102 +1354,148 @@ rm(ligands_nonhuman, tempdf, nb_of_groups)
 
 ##COMBINE
 figS5 = grid.arrange(grobs = list(figS5a, figS5b), ncol = 2)
-ggsave(figS5, filename = "supp_plots_rs/FigS5_12.jpg", width = 22, height = 11, units = "cm", dpi = "retina")
+#ggsave(figS5, filename = "FigS5.jpg", width = 22, height = 11, units = "cm", dpi = "retina")
 ```
 
 #FigS7 logreg, Table S1
 
 ```{r}
-ds = "d1"
-ds = "d2"
-
-load(paste0("objects/ligands_nonhuman_", ds))
-ligands_nonhuman$trig = as.numeric(as.character(ligands_nonhuman$trig))
-ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$pentamer_expression_group)
-ligands_nonhuman %<>% 
+load("ligands_nonhuman_d1")
+ligands_nonhuman_d1$immunogenicity = as.numeric(as.character(ligands_nonhuman_d1$immunogenicity))
+ligands_nonhuman_d1$pentamer_expression_group = cut(x = ligands_nonhuman_d1$pentamer_expression, breaks = c(min(ligands_nonhuman_d1$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d1$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d1$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$pentamer_expression_group)
+ligands_nonhuman_d1 %<>% 
   mutate(pentamer_expression_group2 = case_when(
     .$pentamer_expression_group == 1 ~ "edge",
     .$pentamer_expression_group == 2 ~ "medium",
     .$pentamer_expression_group == 3 ~ "edge")) %>% 
-  select(allele, epitope, trig, freqpenta_tcem, pentamer_expression_group2, thymopscore) %>% 
+  select(allele, peptide, immunogenicity, freqpenta_tcem, pentamer_expression_group2, thymopscore) %>% 
   mutate(log_freqpenta_tcem = log(freqpenta_tcem)) %>% 
   na.omit()
 
-modelglm = glm(formula = trig ~ log_freqpenta_tcem, family = "binomial", data = ligands_nonhuman)
-summary(modelglm)$coef["log_freqpenta_tcem", c("Estimate","Pr(>|z|)")]
-summary(modelglm)$aic
-save(modelglm, file = paste0("glm", ds, "/m1"))
+modelglm = glm(formula = immunogenicity ~ log_freqpenta_tcem, family = "binomial", data = ligands_nonhuman_d1)
+summary(modelglm)
+save(modelglm, file = "glm_d1/m1")
 
-modelglm = glm(formula = trig ~ pentamer_expression_group2, family = "binomial", data = ligands_nonhuman)
-summary(modelglm)$coef["pentamer_expression_group2medium", c("Estimate","Pr(>|z|)")]
-summary(modelglm)$aic
-save(modelglm, file = paste0("glm", ds, "/m2"))
+modelglm = glm(formula = immunogenicity ~ pentamer_expression_group2, family = "binomial", data = ligands_nonhuman_d1)
+summary(modelglm)
+#save(modelglm, file = "glm_d1/m2")
 
-modelglm = glm(formula = trig~thymopscore, family = "binomial", data = ligands_nonhuman)
-summary(modelglm)$coef["thymopscore", c("Estimate","Pr(>|z|)")]
-summary(modelglm)$aic
-save(modelglm, file = paste0("glm", ds, "/m3"))
+modelglm = glm(formula = immunogenicity~thymopscore, family = "binomial", data = ligands_nonhuman_d1)
+summary(modelglm)
+#save(modelglm, file = "glm_d1/m3")
 
-modelglm = glm(formula = trig~log_freqpenta_tcem + pentamer_expression_group2, family = "binomial", data = ligands_nonhuman)
-summary(modelglm)$coef[c("log_freqpenta_tcem","pentamer_expression_group2medium"), c("Estimate","Pr(>|z|)")]
-summary(modelglm)$aic
-save(modelglm, file = paste0("glm", ds, "/m4"))
+modelglm = glm(formula = immunogenicity~log_freqpenta_tcem + pentamer_expression_group2, family = "binomial", data = ligands_nonhuman_d1)
+summary(modelglm)
+#save(modelglm, file = "glm_d1/m4")
 
-modelglm = glm(formula = trig~log_freqpenta_tcem + thymopscore, family = "binomial", data = ligands_nonhuman)
-summary(modelglm)$coef[c("log_freqpenta_tcem","thymopscore"), c("Estimate","Pr(>|z|)")]
-summary(modelglm)$aic
-save(modelglm, file = paste0("glm", ds, "/m5"))
+modelglm = glm(formula = immunogenicity~log_freqpenta_tcem + thymopscore, family = "binomial", data = ligands_nonhuman_d1)
+summary(modelglm)
+#save(modelglm, file = "glm_d1/m5")
 
-modelglm = glm(formula = trig~pentamer_expression_group2 + thymopscore, family = "binomial", data = ligands_nonhuman)
-summary(modelglm)$coef[c("pentamer_expression_group2medium","thymopscore"), c("Estimate","Pr(>|z|)")]
-summary(modelglm)$aic
-save(modelglm, file = paste0("glm", ds, "/m6"))
+modelglm = glm(formula = immunogenicity~pentamer_expression_group2 + thymopscore, family = "binomial", data = ligands_nonhuman_d1)
+summary(modelglm)
+#save(modelglm, file = "glm_d1/m6")
 
-modelglm = glm(formula = trig ~ log_freqpenta_tcem + pentamer_expression_group2 + thymopscore, family = "binomial", data = ligands_nonhuman)
-summary(modelglm)$coef[c("log_freqpenta_tcem","pentamer_expression_group2medium","thymopscore"), c("Estimate","Pr(>|z|)")]
-summary(modelglm)$aic
-save(modelglm, file = paste0("glm", ds, "/m7"))
+modelglm = glm(formula = immunogenicity ~ log_freqpenta_tcem + pentamer_expression_group2 + thymopscore, family = "binomial", data = ligands_nonhuman_d1)
+summary(modelglm)
+#save(modelglm, file = "glm_d1/m7")
 
-modelfiles = list.files(paste0("glm", ds, "/"))
+modelfiles = list.files("glm_d1/")
 resanova = expand.grid(model1 = modelfiles, model2 = modelfiles, stringsAsFactors = F)
 resanova %<>% 
   filter(model1 < model2) %>% 
   mutate(model1resid = NA, model2resid = NA, pvalue = NA)
 
 for(i in 1:nrow(resanova)) {
-  load(paste0("glm", ds, "/", resanova$model1[i]))
+  load(paste0("glm_d1/", resanova$model1[i]))
   modelglm1 = modelglm
-  load(paste0("glm", ds, "/", resanova$model2[i]))
+  load(paste0("glm_d1/", resanova$model2[i]))
   tempanova = anova(modelglm1, modelglm, test = "Chisq")
   resanova$model1resid[i] = tempanova$`Resid. Dev`[1]
   resanova$model2resid[i] = tempanova$`Resid. Dev`[2]
   resanova$pvalue[i] = tempanova$`Pr(>Chi)`[2]
 }
 rm(modelglm, modelglm1, tempanova, i)
-save(resanova, file = paste0("objects/resanova_", ds))
-load(paste0("objects/resanova_", ds))
+#save(resanova, file = "resanova_d1")
+
+#####
+
+load("ligands_nonhuman_d2")
+ligands_nonhuman_d2$immunogenicity = as.numeric(as.character(ligands_nonhuman_d2$immunogenicity))
+ligands_nonhuman_d2$pentamer_expression_group = cut(x = ligands_nonhuman_d2$pentamer_expression, breaks = c(min(ligands_nonhuman_d2$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d2$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d2$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$pentamer_expression_group)
+ligands_nonhuman_d2 %<>% 
+  mutate(pentamer_expression_group2 = case_when(
+    .$pentamer_expression_group == 1 ~ "edge",
+    .$pentamer_expression_group == 2 ~ "medium",
+    .$pentamer_expression_group == 3 ~ "edge")) %>% 
+  select(allele, peptide, immunogenicity, freqpenta_tcem, pentamer_expression_group2, thymopscore) %>% 
+  mutate(log_freqpenta_tcem = log(freqpenta_tcem)) %>% 
+  na.omit()
+
+modelglm = glm(formula = immunogenicity ~ log_freqpenta_tcem, family = "binomial", data = ligands_nonhuman_d2)
+summary(modelglm)
+save(modelglm, file = "glm_d2/m1")
+
+modelglm = glm(formula = immunogenicity ~ pentamer_expression_group2, family = "binomial", data = ligands_nonhuman_d2)
+summary(modelglm)
+#save(modelglm, file = "glm_d2/m2")
+
+modelglm = glm(formula = immunogenicity~thymopscore, family = "binomial", data = ligands_nonhuman_d2)
+summary(modelglm)
+#save(modelglm, file = "glm_d2/m3")
+
+modelglm = glm(formula = immunogenicity~log_freqpenta_tcem + pentamer_expression_group2, family = "binomial", data = ligands_nonhuman_d2)
+summary(modelglm)
+#save(modelglm, file = "glm_d2/m4")
+
+modelglm = glm(formula = immunogenicity~log_freqpenta_tcem + thymopscore, family = "binomial", data = ligands_nonhuman_d2)
+summary(modelglm)
+#save(modelglm, file = "glm_d2/m5")
+
+modelglm = glm(formula = immunogenicity~pentamer_expression_group2 + thymopscore, family = "binomial", data = ligands_nonhuman_d2)
+summary(modelglm)
+#save(modelglm, file = "glm_d2/m6")
+
+modelglm = glm(formula = immunogenicity ~ log_freqpenta_tcem + pentamer_expression_group2 + thymopscore, family = "binomial", data = ligands_nonhuman_d2)
+summary(modelglm)
+#save(modelglm, file = "glm_d2/m7")
+
+modelfiles = list.files("glm_d2/")
+resanova = expand.grid(model1 = modelfiles, model2 = modelfiles, stringsAsFactors = F)
+resanova %<>% 
+  filter(model1 < model2) %>% 
+  mutate(model1resid = NA, model2resid = NA, pvalue = NA)
+
+for(i in 1:nrow(resanova)) {
+  load(paste0("glm_d2/", resanova$model1[i]))
+  modelglm1 = modelglm
+  load(paste0("glm_d2/", resanova$model2[i]))
+  tempanova = anova(modelglm1, modelglm, test = "Chisq")
+  resanova$model1resid[i] = tempanova$`Resid. Dev`[1]
+  resanova$model2resid[i] = tempanova$`Resid. Dev`[2]
+  resanova$pvalue[i] = tempanova$`Pr(>Chi)`[2]
+}
+rm(modelglm, modelglm1, tempanova, i)
+#save(resanova, file = "resanova_d2")
 ```
 
 #FigS8 Forest plot hydrophobicity
+##D1
 
 ```{r}
-mypal <- pal_npg("nrc", alpha = 0.7)(9)
-mypal
+load("ligands_nonhuman_d1")
 
-#D1
-load("objects/ligands_nonhuman_d1")
-
+ligands_nonhuman_d1$immunogenicity = as.numeric(as.character(ligands_nonhuman_d1$immunogenicity))
 ##Hydrophobicity index - Kyte & Doolittle
-ligands_nonhuman$trig = as.numeric(as.character(ligands_nonhuman$trig))
-load("../objects/hydroph_indices") #ebből egy vektor kell csak
-indices = indices[27,]
-ligands_nonhuman$hydrophobicity =  unname(sapply(ligands_nonhuman$tcem, function(y) {median(as.numeric(indices[,strsplit(y, "")[[1]]]))}))
+load("hydro_indices")
+ligands_nonhuman_d1$hydrophobicity =  unname(sapply(ligands_nonhuman_d1$tcem, function(x) {median(as.numeric(hydro_indices[strsplit(x, "")[[1]]]))}))
 
 ##Create expression group and drop NAs
-ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$pentamer_expression_group)
-ligands_nonhuman %<>% 
+ligands_nonhuman_d1$pentamer_expression_group = cut(x = ligands_nonhuman_d1$pentamer_expression, breaks = c(min(ligands_nonhuman_d1$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d1$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d1$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$pentamer_expression_group)
+ligands_nonhuman_d1 %<>% 
   mutate(pentamer_expression_group2 = case_when(
     .$pentamer_expression_group == 1 ~ "Low or High (ref.)",
     .$pentamer_expression_group == 2 ~ "Medium",
@@ -1449,14 +1503,13 @@ ligands_nonhuman %<>%
   mutate(log_freqpenta_tcem = log(freqpenta_tcem)) %>%
   filter(!is.na(thymopscore)) %>% 
   mutate(thymo_zscore = (thymopscore - mean(thymopscore))/sd(thymopscore)) %>% 
-  dplyr::select(allele, epitope, trig, log_freqpenta_tcem, pentamer_expression_group2, thymo_zscore, hydrophobicity) %>% 
+  dplyr::select(allele, peptide, immunogenicity, log_freqpenta_tcem, pentamer_expression_group2, thymo_zscore, hydrophobicity) %>% 
   na.omit()
-#347 peptides removes from D1
 
 ##Model
-colnames(ligands_nonhuman)[4:7] = c("TCEM frequency (log)", "TCEM expression group", "TCEM thymoproteasomal cleavage score (z-score)", "TCEM hydrophobicity")
+colnames(ligands_nonhuman_d1)[4:7] = c("TCEM frequency (log)", "TCEM expression group", "TCEM thymoproteasomal cleavage score (z-score)", "TCEM hydrophobicity")
 
-modelglm_d1 = glm(formula = trig ~ `TCEM frequency (log)` + `TCEM expression group` + `TCEM thymoproteasomal cleavage score (z-score)` + `TCEM hydrophobicity`, family = "binomial", data = ligands_nonhuman)
+modelglm_d1 = glm(formula = immunogenicity ~ `TCEM frequency (log)` + `TCEM expression group` + `TCEM thymoproteasomal cleavage score (z-score)` + `TCEM hydrophobicity`, family = "binomial", data = ligands_nonhuman_d1)
 summary(modelglm_d1)
 
 panels <- list(list(width = 0.03),
@@ -1474,13 +1527,20 @@ fig_forest_d1 = forest_model(modelglm_d1,
   theme(axis.text.x = element_text(size=5))
 fig_forest_d1
 
-#D2
-load("objects/ligands_nonhuman_d2")
-ligands_nonhuman$trig = as.numeric(as.character(ligands_nonhuman$trig))
-ligands_nonhuman$hydrophobicity =  unname(sapply(ligands_nonhuman$tcem, function(y) {median(as.numeric(indices[,strsplit(y, "")[[1]]]))}))
-ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$pentamer_expression_group)
-ligands_nonhuman %<>% 
+```
+
+##D2
+
+```{r}
+load("ligands_nonhuman_d2")
+ligands_nonhuman_d2$immunogenicity = as.numeric(as.character(ligands_nonhuman_d2$immunogenicity))
+##Hydrophobicity index - Kyte & Doolittle
+load("hydro_indices")
+ligands_nonhuman_d2$hydrophobicity =  unname(sapply(ligands_nonhuman_d2$tcem, function(x) {median(as.numeric(hydro_indices[strsplit(x, "")[[1]]]))}))
+
+ligands_nonhuman_d2$pentamer_expression_group = cut(x = ligands_nonhuman_d2$pentamer_expression, breaks = c(min(ligands_nonhuman_d2$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d2$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d2$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$pentamer_expression_group)
+ligands_nonhuman_d2 %<>% 
   mutate(pentamer_expression_group2 = case_when(
     .$pentamer_expression_group == 1 ~ "Low or High (ref.)",
     .$pentamer_expression_group == 2 ~ "Medium",
@@ -1488,15 +1548,24 @@ ligands_nonhuman %<>%
   mutate(log_freqpenta_tcem = log(freqpenta_tcem)) %>%
   filter(!is.na(thymopscore)) %>% 
   mutate(thymo_zscore = (thymopscore - mean(thymopscore))/sd(thymopscore)) %>% 
-  dplyr::select(allele, epitope, trig, log_freqpenta_tcem, pentamer_expression_group2, thymo_zscore, hydrophobicity) %>% 
+  dplyr::select(allele, peptide, immunogenicity, log_freqpenta_tcem, pentamer_expression_group2, thymo_zscore, hydrophobicity) %>% 
   na.omit()
 #62 peptides removes from D2
 
 ##Model
-colnames(ligands_nonhuman)[4:7] = c("TCEM frequency (log)", "TCEM expression group", "TCEM thymoproteasomal cleavage score (z-score)", "TCEM hydrophobicity")
+colnames(ligands_nonhuman_d2)[4:7] = c("TCEM frequency (log)", "TCEM expression group", "TCEM thymoproteasomal cleavage score (z-score)", "TCEM hydrophobicity")
 
-modelglm_d2 = glm(formula = trig ~ `TCEM frequency (log)` + `TCEM expression group` + `TCEM thymoproteasomal cleavage score (z-score)` + `TCEM hydrophobicity`, family = "binomial", data = ligands_nonhuman)
+modelglm_d2 = glm(formula = immunogenicity ~ `TCEM frequency (log)` + `TCEM expression group` + `TCEM thymoproteasomal cleavage score (z-score)` + `TCEM hydrophobicity`, family = "binomial", data = ligands_nonhuman_d2)
 summary(modelglm_d2)
+
+panels <- list(list(width = 0.03),
+               list(width = 1, display = ~variable, heading = "Variable"),
+               list(width = 1, display = ~level),
+               list(width = 0.03, item = "vline", hjust = 0.5),
+               list(width = 1, item = "forest", hjust = 0.5, heading = "OR (95% CI)", linetype = "dashed", line_x = 0),
+               list(width = 0.03, item = "vline", hjust = 0.5),
+               list(width = 0.05, display = ~ ifelse(reference, "", format.pval(p.value, digits = 3, eps = 0.001)),display_na = NA, hjust = 0.5, heading = "P"),
+               list(width = 0.03))
 
 fig_forest_d2 = forest_model(modelglm_d2, 
              panels = panels,
@@ -1508,7 +1577,7 @@ fig_forest_d2
 
 fig_forest= grid.arrange(textGrob("Dataset 1"), fig_forest_d1, textGrob("Dataset 2"), fig_forest_d2, layout_matrix = rbind(c(1,1,1,1),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(3,3,3,3),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4)))
 
-ggsave(fig_forest, filename = "supp_plots_rs/figS8_forestplot_13.png", width = 13, height = 8, units = "cm", dpi = "retina")
+#ggsave(fig_forest, filename = "figS8.png", width = 13, height = 8, units = "cm", dpi = "retina")
 ```
 
 #FigS9 Secondary anchors
@@ -1571,9 +1640,7 @@ ligands_nonhuman %<>%
   )) %>% 
   transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
 save(ligands_nonhuman, file = "ligands_nonhuman_d1d2_wosecanc") #3930
-
 ```
-
 
 ##A TCEM frequency
 
@@ -1827,37 +1894,54 @@ margin45 = theme(plot.margin = unit(c(.1,.1,.1,.25), "cm"))
 figS9 = grid.arrange(grobs = c(lapply(list(figS9_1, figS9_2, figS9_3), "+", margin12367), 
                               lapply(list(figS9_45), "+", margin45), 
                               lapply(list(figS9_6, figS9_7), "+", margin12367)), layout_matrix = lay)
-#ggsave(figS9, filename = "FigS9_secanc.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+#ggsave(figS9, filename = "FigS9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
 ##Data calculation for FigS9D
 
 ```{r}
 load("ligands_nonhuman_d1_wosecanc")
+ligands_nonhuman_d1$freqpenta_tcem_group = cut(x = ligands_nonhuman_d1$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d1$freqpenta_tcem),median(ligands_nonhuman_d1$freqpenta_tcem),max(ligands_nonhuman_d1$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$freqpenta_tcem_group)
+fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$freqpenta_tcem_group)
+
+ligands_nonhuman_d1$pentamer_expression_group = cut(x = ligands_nonhuman_d1$pentamer_expression, breaks = c(min(ligands_nonhuman_d1$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d1$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d1$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$pentamer_expression_group)
+fisher.test(ligands_nonhuman_d1$immunogenicity[ligands_nonhuman_d1$pentamer_expression_group %in% c(1,2)], ligands_nonhuman_d1$pentamer_expression_group[ligands_nonhuman_d1$pentamer_expression_group %in% c(1,2)])
+fisher.test(ligands_nonhuman_d1$immunogenicity[ligands_nonhuman_d1$pentamer_expression_group %in% c(2,3)], ligands_nonhuman_d1$pentamer_expression_group[ligands_nonhuman_d1$pentamer_expression_group %in% c(2,3)]) #OR were converted to 1/OR for Fig1D
+
+ligands_nonhuman_d1$thymopscore_group = cut(x = ligands_nonhuman_d1$thymopscore, breaks = quantile(ligands_nonhuman_d1$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$thymopscore_group)
+fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$thymopscore_group)
+
+ligands_nonhuman_d1$immunopscore_group = cut(x = ligands_nonhuman_d1$immunopscore, breaks = quantile(ligands_nonhuman_d1$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d1$immunopscore_group)
+fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$immunopscore_group)
+
 load("ligands_nonhuman_d2_wosecanc")
+ligands_nonhuman_d2$freqpenta_tcem_group = cut(x = ligands_nonhuman_d2$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d2$freqpenta_tcem),median(ligands_nonhuman_d2$freqpenta_tcem),max(ligands_nonhuman_d2$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$freqpenta_tcem_group)
+fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$freqpenta_tcem_group)
 
-ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #1: <median, 2: >= median. Median = 4.
-table(ligands_nonhuman$freqpenta_tcem_group)
-fisher.test(ligands_nonhuman$trig, ligands_nonhuman$freqpenta_tcem_group)
+ligands_nonhuman_d2$pentamer_expression_group = cut(x = ligands_nonhuman_d2$pentamer_expression, breaks = c(min(ligands_nonhuman_d2$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d2$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d2$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$pentamer_expression_group)
+fisher.test(ligands_nonhuman_d2$immunogenicity[ligands_nonhuman_d2$pentamer_expression_group %in% c(1,2)], ligands_nonhuman_d2$pentamer_expression_group[ligands_nonhuman_d2$pentamer_expression_group %in% c(1,2)])
+fisher.test(ligands_nonhuman_d2$immunogenicity[ligands_nonhuman_d2$pentamer_expression_group %in% c(2,3)], ligands_nonhuman_d2$pentamer_expression_group[ligands_nonhuman_d2$pentamer_expression_group %in% c(2,3)]) #OR were converted to 1/OR for Fig1D
 
-ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$pentamer_expression_group)
-fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(1,2)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(1,2)])
-fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(2,3)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(2,3)])
+ligands_nonhuman_d2$thymopscore_group = cut(x = ligands_nonhuman_d2$thymopscore, breaks = quantile(ligands_nonhuman_d2$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$thymopscore_group)
+fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$thymopscore_group)
 
-ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$thymopscore_group)
-fisher.test(ligands_nonhuman$trig, ligands_nonhuman$thymopscore_group)
+ligands_nonhuman_d2$immunopscore_group = cut(x = ligands_nonhuman_d2$immunopscore, breaks = quantile(ligands_nonhuman_d2$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman_d2$immunopscore_group)
+fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$immunopscore_group)
 
-ligands_nonhuman$immunopscore_group = cut(x = ligands_nonhuman$immunopscore, breaks = quantile(ligands_nonhuman$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-table(ligands_nonhuman$immunopscore_group)
-fisher.test(ligands_nonhuman$trig, ligands_nonhuman$immunopscore_group)
 ```
 
 #FigS10 Chowell
 
 ```{r}
-chowell = read.delim("../objects/Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #9888
+chowell = read.delim("Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #9888
 load("ligands_nonhuman_d1d2")
 chowell = chowell[chowell$dissimilarity > 0,] #4263
 chowell = chowell[is.na(fmatch(chowell$nmer, ligands_nonhuman$epitope)),] #3430
@@ -1908,7 +1992,7 @@ figxlab = c(expression('[' ~ 2.0 ~ 'x' ~ 10^{-15} ~ "," ~ 2.9 ~ 'x' ~ 10^{-14} ~
            expression('(' ~ 0.992 ~ "," ~ 0.9999 ~ ']'),
            expression('(' ~ 0.9999 ~ "," ~ 1 ~ ']'))
 
-figS10_chowell = ggplot(groups, aes(group_num, ratio)) +
+figS10 = ggplot(groups, aes(group_num, ratio)) +
   geom_point(size = 2) +
   scale_x_continuous(breaks = groups$group_num, labels = figxlab) +
   geom_smooth(method = NULL, se = F, linetype = "dashed", col = "black", size = 0.5, span = 0.6) +
@@ -1926,8 +2010,8 @@ figS10_chowell = ggplot(groups, aes(group_num, ratio)) +
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
-figS10_chowell
-#ggsave(figS10_chowell, filename = "figS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
+figS10
+#ggsave(figS10, filename = "figS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
 rm(chowell, groups, b, b_exp, wm)
 ```
 
@@ -2012,150 +2096,204 @@ rm(auc, df, perf, pred, tbl, aLign)
 
 #COMBINE
 figs11 = grid.arrange(grobs = list(figs11a,figs11b), ncol = 2)
-ggsave(figs11, filename = "supp_plots_rs/FigS11.png", width = 22, height = 11, units = "cm", dpi = "retina")
-
+ggsave(figs11, filename = "FigS11.png", width = 22, height = 11, units = "cm", dpi = "retina")
 ```
 
 #Table S2 - Fishers
+##D1
 
 ```{r}
 load("ligands_nonhuman_d1")
-load("ligands_nonhuman_d2")
 
 #TCEMFREQ
-dataset = ligands_nonhuman
+dataset = ligands_nonhuman_d1
 dataset$group = cut(x = dataset$freqpenta_tcem, breaks = c(min(dataset$freqpenta_tcem),median(dataset$freqpenta_tcem),max(dataset$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
-table(dataset$group,dataset$trig)
-fisher.test(dataset$group, dataset$trig)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
 
 #EXPR
-dataset = ligands_nonhuman %>% filter(!is.na(pentamer_expression))
+dataset = ligands_nonhuman_d1 %>% filter(!is.na(pentamer_expression))
 dataset$group = cut(x = dataset$pentamer_expression, breaks = c(min(dataset$pentamer_expression),quantile(dataset$pentamer_expression,c(0.15,0.75)),max(dataset$pentamer_expression)), labels = F, include.lowest = T, right = F)
-table(dataset$group,dataset$trig)
-fisher.test(dataset$group[dataset$group %in% c(1,2)], dataset$trig[dataset$group %in% c(1,2)])
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group[dataset$group %in% c(1,2)], dataset$immunogenicity[dataset$group %in% c(1,2)])
 
 #THYMO
-dataset = ligands_nonhuman %>% filter(!is.na(thymopscore))
+dataset = ligands_nonhuman_d1 %>% filter(!is.na(thymopscore))
 dataset$group = cut(x = dataset$thymopscore, breaks = quantile(dataset$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-table(dataset$group,dataset$trig)
-fisher.test(dataset$group, dataset$trig)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
 
 #TCEMFREQ & EXPR
-dataset = ligands_nonhuman %>% filter(!is.na(pentamer_expression))
+dataset = ligands_nonhuman_d1 %>% filter(!is.na(pentamer_expression))
 dataset$group = NA
 dataset$group[dataset$freqpenta_tcem < 4 & dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15)] = 1
 dataset$group[dataset$freqpenta_tcem >= 4 & dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75)] = 2
-table(dataset$group,dataset$trig)
-fisher.test(dataset$group, dataset$trig)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
 
 #TCEMFREQ & THYMO
-dataset = ligands_nonhuman %>% filter(!is.na(freqpenta_tcem),!is.na(thymopscore))
+dataset = ligands_nonhuman_d1 %>% filter(!is.na(freqpenta_tcem),!is.na(thymopscore))
 dataset$group = NA
 dataset$group[dataset$freqpenta_tcem < 4 & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
 dataset$group[dataset$freqpenta_tcem >= 4 & dataset$thymopscore >= quantile(dataset$thymopscore,0.25)] = 2
-table(dataset$group,dataset$trig)
-fisher.test(dataset$group, dataset$trig)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
 
 #EXPR & THYMO
-dataset = ligands_nonhuman %>% filter(!is.na(pentamer_expression),!is.na(thymopscore))
+dataset = ligands_nonhuman_d1 %>% filter(!is.na(pentamer_expression),!is.na(thymopscore))
 dataset$group = NA
 dataset$group[dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15) & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
 dataset$group[dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75) & dataset$thymopscore >= quantile(dataset$thymopscore,0.25)] = 2
-table(dataset$group,dataset$trig)
-fisher.test(dataset$group, dataset$trig)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
 
 #TCEMFREQ & EXPR & THYMO
-dataset = ligands_nonhuman %>% filter(!is.na(pentamer_expression),!is.na(thymopscore))
+dataset = ligands_nonhuman_d1 %>% filter(!is.na(pentamer_expression),!is.na(thymopscore))
 dataset$group = NA
 dataset$group[dataset$freqpenta_tcem < 4 & dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15) & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
 dataset$group[dataset$freqpenta_tcem >= 4 & dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75) & dataset$thymopscore > quantile(dataset$thymopscore,0.25)] = 2
-table(dataset$group,dataset$trig)
-fisher.test(dataset$group, dataset$trig)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
+
+```
+
+##D2
+
+```{r}
+load("ligands_nonhuman_d2")
+
+#TCEMFREQ
+dataset = ligands_nonhuman_d2
+dataset$group = cut(x = dataset$freqpenta_tcem, breaks = c(min(dataset$freqpenta_tcem),median(dataset$freqpenta_tcem),max(dataset$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
+
+#EXPR
+dataset = ligands_nonhuman_d2 %>% filter(!is.na(pentamer_expression))
+dataset$group = cut(x = dataset$pentamer_expression, breaks = c(min(dataset$pentamer_expression),quantile(dataset$pentamer_expression,c(0.15,0.75)),max(dataset$pentamer_expression)), labels = F, include.lowest = T, right = F)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group[dataset$group %in% c(1,2)], dataset$immunogenicity[dataset$group %in% c(1,2)])
+
+#THYMO
+dataset = ligands_nonhuman_d2 %>% filter(!is.na(thymopscore))
+dataset$group = cut(x = dataset$thymopscore, breaks = quantile(dataset$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
+
+#TCEMFREQ & EXPR
+dataset = ligands_nonhuman_d2 %>% filter(!is.na(pentamer_expression))
+dataset$group = NA
+dataset$group[dataset$freqpenta_tcem < 4 & dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15)] = 1
+dataset$group[dataset$freqpenta_tcem >= 4 & dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75)] = 2
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
+
+#TCEMFREQ & THYMO
+dataset = ligands_nonhuman_d2 %>% filter(!is.na(freqpenta_tcem),!is.na(thymopscore))
+dataset$group = NA
+dataset$group[dataset$freqpenta_tcem < 4 & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
+dataset$group[dataset$freqpenta_tcem >= 4 & dataset$thymopscore >= quantile(dataset$thymopscore,0.25)] = 2
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
+
+#EXPR & THYMO
+dataset = ligands_nonhuman_d2 %>% filter(!is.na(pentamer_expression),!is.na(thymopscore))
+dataset$group = NA
+dataset$group[dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15) & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
+dataset$group[dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75) & dataset$thymopscore >= quantile(dataset$thymopscore,0.25)] = 2
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
+
+#TCEMFREQ & EXPR & THYMO
+dataset = ligands_nonhuman_d2 %>% filter(!is.na(pentamer_expression),!is.na(thymopscore))
+dataset$group = NA
+dataset$group[dataset$freqpenta_tcem < 4 & dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15) & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
+dataset$group[dataset$freqpenta_tcem >= 4 & dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75) & dataset$thymopscore > quantile(dataset$thymopscore,0.25)] = 2
+table(dataset$group,dataset$immunogenicity)
+fisher.test(dataset$group, dataset$immunogenicity)
 
 ```
 
 #Table S3 Aminosav
 
 ```{r}
-resdf = expand.grid(ds = c("d1", "d2", "d1d2"), type = c("epitope", "tcem"), excludedaa = rownames(AABLOSUM62), stringsAsFactors = F)
-resdf %<>% mutate(n = NA, n_im = NA, n_nim = NA,
-                  freqpenta_med = NA, freqpenta_med_im = NA, freqpenta_med_nim = NA, freqpenta_wilp = NA, freqpenta_fishp = NA, freqpenta_fishor = NA,
-                  expr_fishp1 = NA, expr_fishor1 = NA, expr_fishp2 = NA, expr_fishor2 = NA,
-                  thymopscore_med_im = NA, thymopscore_med_nim = NA, thymopscore_wilp = NA, thymopscore_fishp = NA, thymopscore_fishor = NA,
-                  immunopscore_med_im = NA, immunopscore_med_nim = NA, immunopscore_wilp = NA, immunopscore_fishp = NA, immunopscore_fishor = NA)
-for(i in 1:nrow(resdf)) {
-  print(i)
-  load(paste0("ligands_nonhuman_", resdf$ds[i]))
-  if(resdf$type[i] == "epitope") {ligands_nonhuman %<>% filter(!grepl(resdf$excludedaa[i], epitope))} else {ligands_nonhuman %<>% filter(!grepl(resdf$excludedaa[i], tcem))}
-  resdf$n[i] = ligands_nonhuman %>% nrow()
-  resdf$n_im[i] = ligands_nonhuman %>% filter(trig == 1) %>% nrow()
-  resdf$n_nim[i] = ligands_nonhuman %>% filter(trig == 0) %>% nrow()
-  #TCEM FREQUENCY
-  resdf$freqpenta_med[i] = ligands_nonhuman %>% pull(freqpenta_tcem) %>% median()
-  resdf$freqpenta_med_im[i] = ligands_nonhuman %>% filter(trig == 1) %>% pull(freqpenta_tcem) %>% median()
-  resdf$freqpenta_med_nim[i] = ligands_nonhuman %>% filter(trig == 0) %>% pull(freqpenta_tcem) %>% median()
-  resdf$freqpenta_wilp[i] = wilcox.test(freqpenta_tcem ~ trig, ligands_nonhuman)$p.value
-  ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
-  ft1 = fisher.test(matrix(c(
-    ligands_nonhuman %>% filter(trig == 0, freqpenta_tcem_group == 2) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, freqpenta_tcem_group == 2) %>% nrow(), 
-    ligands_nonhuman %>% filter(trig == 0, freqpenta_tcem_group == 1) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, freqpenta_tcem_group == 1) %>% nrow()),
-    nrow = 2, ncol = 2))
-  resdf$freqpenta_fishp[i] = ft1$p.value
-  resdf$freqpenta_fishor[i] = ft1$estimate
+proteome = readFASTA("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta")
+aafreq = as.data.frame(Table(unlist(strsplit(unlist(proteome, use.names = F), ""), use.names = F)) / length(unlist(strsplit(unlist(proteome, use.names = F), ""), use.names = F)))
+colnames(aafreq) = "freq_in_human_proteome"
+rm(proteome)
+aafreq["U",]
+
+load("ligands_nonhuman_d1d2")
+aacomp_nim = ligands_nonhuman %>% filter(immunogenicity == 0) %>% pull(tcem) %>% strsplit(split = "") %>% unlist(use.names = F) %>% factor(levels = rownames(AABLOSUM62)) %>% table() %>% as.numeric()
+aacomp_im = ligands_nonhuman %>% filter(immunogenicity == 1) %>% pull(tcem) %>% strsplit(split = "") %>% unlist(use.names = F) %>% factor(levels = rownames(AABLOSUM62)) %>% table() %>% as.numeric()
+aacomp = data.frame(aa = rownames(AABLOSUM62), nim = aacomp_nim, im = aacomp_im)
+ftres = t(sapply(rownames(AABLOSUM62), function(y) {
+  ft = fisher.test(matrix(data = c(aacomp$im[aacomp$aa == y],aacomp$nim[aacomp$aa == y],
+                                   sum(aacomp$im[aacomp$aa != y]),sum(aacomp$nim[aacomp$aa != y])), nrow = 2))
+  c(ft$estimate, ft$p.value)
+}))
+colnames(ftres) = c("or", "p")
+rm(aacomp, aacomp_im, aacomp_nim, ligands_nonhuman)
+
+
+#Excluding amino acids
+resdf_exclaa = data.frame(aa = rownames(AABLOSUM62), 
+                          freqpenta_med_im = NA, freqpenta_med_nim = NA, freqpenta_wilp = NA,
+                          expr_fishor1 = NA, expr_fishp1 = NA, expr_fishor2 = NA, expr_fishp2 = NA,
+                          thymopscore_fishor = NA, thymopscore_fishp = NA,
+                          immunopscore_fishor = NA, immunopscore_fishp = NA)
+
+for(i in 1:nrow(resdf_exclaa)) {
+  load("ligands_nonhuman_d1d2")
+  ligands_nonhuman %<>% filter(!grepl(resdf_exclaa$aa[i], tcem))
+  resdf_exclaa$freqpenta_med_im[i] = ligands_nonhuman %>% filter(immunogenicity == 1) %>% pull(freqpenta_tcem) %>% median()
+  resdf_exclaa$freqpenta_med_nim[i] = ligands_nonhuman %>% filter(immunogenicity == 0) %>% pull(freqpenta_tcem) %>% median()
+  resdf_exclaa$freqpenta_wilp[i] = wilcox.test(freqpenta_tcem ~ immunogenicity, ligands_nonhuman)$p.value
   #EXPRESSION
   ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
-  ft2 = fisher.test(matrix(c(
-    ligands_nonhuman %>% filter(trig == 0, pentamer_expression_group == 2, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, pentamer_expression_group == 2, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(), 
-    ligands_nonhuman %>% filter(trig == 0, pentamer_expression_group == 1, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, pentamer_expression_group == 1, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow()),
+  ft_lm = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 2) %>% nrow(),
+    ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 2) %>% nrow(), 
+    ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 1) %>% nrow(),
+    ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 1) %>% nrow()),
     nrow = 2, ncol = 2))
-  resdf$expr_fishp1[i] = ft2$p.value
-  resdf$expr_fishor1[i] = ft2$estimate
-  ft3 = fisher.test(matrix(c(
-    ligands_nonhuman %>% filter(trig == 0, pentamer_expression_group == 2, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, pentamer_expression_group == 2, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(), 
-    ligands_nonhuman %>% filter(trig == 0, pentamer_expression_group == 3, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, pentamer_expression_group == 3, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow()),
+  resdf_exclaa$expr_fishor1[i] = ft_lm$estimate
+  resdf_exclaa$expr_fishp1[i] = ft_lm$p.value
+  ft_hm = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 2) %>% nrow(),
+    ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 2) %>% nrow(), 
+    ligands_nonhuman %>% filter(immunogenicity == 0, pentamer_expression_group == 3) %>% nrow(),
+    ligands_nonhuman %>% filter(immunogenicity == 1, pentamer_expression_group == 3) %>% nrow()),
     nrow = 2, ncol = 2))
-  resdf$expr_fishp2[i] = ft3$p.value
-  resdf$expr_fishor2[i] = ft3$estimate
+  resdf_exclaa$expr_fishor2[i] = ft_hm$estimate
+  resdf_exclaa$expr_fishp2[i] = ft_hm$p.value
   #THYMOPSCORE
   ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-  resdf$thymopscore_med_im[i] = ligands_nonhuman %>% filter(trig == 1) %>% pull(thymopscore) %>% median(na.rm = T)
-  resdf$thymopscore_med_nim[i] = ligands_nonhuman %>% filter(trig == 0) %>% pull(thymopscore) %>% median(na.rm = T)
-  resdf$thymopscore_wilp[i] = wilcox.test(thymopscore ~ trig, ligands_nonhuman)$p.value
-  ft4 = fisher.test(matrix(c(
-    ligands_nonhuman %>% filter(trig == 0, thymopscore_group == 2) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, thymopscore_group == 2) %>% nrow(), 
-    ligands_nonhuman %>% filter(trig == 0, thymopscore_group == 1) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, thymopscore_group == 1) %>% nrow()),
+  ft_thymo = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(immunogenicity == 0, thymopscore_group == 2) %>% nrow(),
+    ligands_nonhuman %>% filter(immunogenicity == 1, thymopscore_group == 2) %>% nrow(), 
+    ligands_nonhuman %>% filter(immunogenicity == 0, thymopscore_group == 1) %>% nrow(),
+    ligands_nonhuman %>% filter(immunogenicity == 1, thymopscore_group == 1) %>% nrow()),
     nrow = 2, ncol = 2))
-  resdf$thymopscore_fishp[i] = ft4$p.value
-  resdf$thymopscore_fishor[i] = ft4$estimate
+  resdf_exclaa$thymopscore_fishor[i] = ft_thymo$estimate
+  resdf_exclaa$thymopscore_fishp[i] = ft_thymo$p.value
   #IMMUNOPSCORE
   ligands_nonhuman$immunopscore_group = cut(x = ligands_nonhuman$immunopscore, breaks = quantile(ligands_nonhuman$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
-  resdf$immunopscore_med_im[i] = ligands_nonhuman %>% filter(trig == 1) %>% pull(immunopscore) %>% median(na.rm = T)
-  resdf$immunopscore_med_nim[i] = ligands_nonhuman %>% filter(trig == 0) %>% pull(immunopscore) %>% median(na.rm = T)
-  resdf$immunopscore_wilp[i] = wilcox.test(immunopscore ~ trig, ligands_nonhuman)$p.value
-  ft5 = fisher.test(matrix(c(
-    ligands_nonhuman %>% filter(trig == 0, immunopscore_group == 2) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, immunopscore_group == 2) %>% nrow(), 
-    ligands_nonhuman %>% filter(trig == 0, immunopscore_group == 1) %>% nrow(),
-    ligands_nonhuman %>% filter(trig == 1, immunopscore_group == 1) %>% nrow()),
+  ft_immuno = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(immunogenicity == 0, immunopscore_group == 2) %>% nrow(),
+    ligands_nonhuman %>% filter(immunogenicity == 1, immunopscore_group == 2) %>% nrow(), 
+    ligands_nonhuman %>% filter(immunogenicity == 0, immunopscore_group == 1) %>% nrow(),
+    ligands_nonhuman %>% filter(immunogenicity == 1, immunopscore_group == 1) %>% nrow()),
     nrow = 2, ncol = 2))
-  resdf$immunopscore_fishp[i] = ft5$p.value
-  resdf$immunopscore_fishor[i] = ft5$estimate
-  rm(ft1, ft2, ft3, ft4, ft5, ligands_nonhuman)
+  resdf_exclaa$immunopscore_fishp[i] = ft_immuno$p.value
+  resdf_exclaa$immunopscore_fishor[i] = ft_immuno$estimate
+  rm(ft_lm, ft_hm, ft_thymo, ft_immuno, ligands_nonhuman)
 }
-aalevels = resdf %>% filter(ds == "d2", type == "tcem") %>% arrange(n) %>% pull(excludedaa)
-resdf$excludedaa = factor(resdf$excludedaa, levels = aalevels)
-resdf$ds = factor(resdf$ds, levels = c("d1", "d2", "d1d2"))
+rm(i)
 
-resdf %<>% mutate_at(7:26, function(x) signif(x, digits = 3))
-#write.table(resdf, file = "results_when_aa_excluded.txt", quote = F, sep = "\t", dec = ".", row.names = F)
+resdf = cbind.data.frame(freq_in_human_proteome = aafreq[rownames(aafreq) != "U",], ftres)
+resdf = cbind.data.frame(resdf, resdf_exclaa[match(rownames(resdf), resdf_exclaa$aa),])
+resdf = resdf[,c(4,1:3,5:15)]
 
 ```
 
