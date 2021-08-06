@@ -63,14 +63,14 @@ activating$bindingrp = apply(activating,1,function(x) ifelse(x[1] %in% rownames(
 rm(binding_matrix)
 ligands_raw_d1 = activating %>% 
   filter(aff<500|bindingrp<2) %>% 
-  dplyr::select(allele, peptide, n_activating_assay, activating_ratio) #21,474
+  dplyr::select(allele, peptide, n_activating_assay, activating_ratio) #no. of peptides after filtering: 21,474
 ```
 
 ##Filter 1 (activating assay)
 
 ```{r}
 ligands_raw_d1 %<>% 
-  filter(n_activating_assay >= 2) #5,630
+  filter(n_activating_assay >= 2) #no. of peptides after filtering: 5,630
 ```
 
 ##Filter 2 - Drop human peptides
@@ -82,7 +82,7 @@ tempdf$human = pbsapply(tempdf$peptide, function(z) any(stri_detect_fixed(proteo
 table(tempdf$human) #Human: 827, nonhuman: 4,462
 humaneps = tempdf$peptide[tempdf$human == T]
 ligands_raw_d1 %<>% 
-  filter(!peptide %in% humaneps) #4,634
+  filter(!peptide %in% humaneps) #no. of peptides after filtering:4,634
 rm(proteome, tempdf, humaneps)
 ```
 
@@ -92,7 +92,7 @@ rm(proteome, tempdf, humaneps)
 ligands_raw_d1$immunogenicity = NA
 ligands_raw_d1$immunogenicity[ligands_raw_d1$activating_ratio == 0] = 0
 ligands_raw_d1$immunogenicity[ligands_raw_d1$activating_ratio > .5] = 1
-ligands_raw_d1 %<>% na.omit() #4,118
+ligands_raw_d1 %<>% na.omit() #no. of peptides after filtering: 4,118
 table(ligands_raw_d1$immunogenicity) #0 - 2,617; 1 - 1,501
 ```
 
@@ -104,7 +104,7 @@ length(unique(ligands_raw_d1$peptide[duplicated(ligands_raw_d1$peptide)])) #95
 #ligands_raw_d1 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
 drop_eps = ligands_raw_d1 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #13 peptides/95
 #writeLines(drop_eps, "01out/dropped_peptides.txt")
-ligands_raw_d1 %<>% filter(!peptide %in% drop_eps) #4,089
+ligands_raw_d1 %<>% filter(!peptide %in% drop_eps) #no. of peptides after filtering: 4,089
 rm(drop_eps)
 
 #Epitope unique
@@ -116,7 +116,7 @@ for(j in 1:length(eps)) {
   ligands_raw_d1[ligands_raw_d1$peptide == eps[j],] = tempdf
 }
 rm(eps, tempdf, j)
-ligands_raw_d1 = unique(ligands_raw_d1) #no. of peptides after filtering 3,955
+ligands_raw_d1 = unique(ligands_raw_d1) #no. of peptides after filtering: 3,955
 
 ligands_raw_d1$immunogenicity = factor(ligands_raw_d1$immunogenicity, levels = c("1","0"))
 ```
@@ -159,17 +159,17 @@ rm(mhc_ligand_filt)
 ```{r}
 ligands_raw_d2 = binding %>% 
   left_join(activating, by = c("allele", "peptide")) %>% 
-  filter(!is.na(activating_ratio)) #6936
+  filter(!is.na(activating_ratio)) #no. of peptides after filtering: 6936
 rm(activating, binding)
 ligands_raw_d2 %<>% 
-  filter(n_binding_assay >= 2, binding_ratio > 0.6) #2,345
+  filter(n_binding_assay >= 2, binding_ratio > 0.6) #no. of peptides after filtering: 2,345
 ```
 
 ##Filter 1 (binding assay, T cell activation assay, binding ratio)
 
 ```{r}
 ligands_raw_d2 %<>% 
-  filter(n_activating_assay >= 2) #1,506
+  filter(n_activating_assay >= 2) #no. of peptides after filtering: 1,506
 ```
 
 ##Filter 2 - Drop human peptides
@@ -180,7 +180,7 @@ tempdf = ligands_raw_d2 %>% dplyr::select(peptide) %>% unique()
 tempdf$human = pbsapply(tempdf$peptide, function(z) any(stri_detect_fixed(proteome, z))) #TRUE - human, FALSE - nonhuman
 table(tempdf$human) #Human: 187, nonhuman: 1,282
 humaneps = tempdf$peptide[tempdf$human == T]
-ligands_raw_d2 %<>% filter(!peptide %in% humaneps) #1,318
+ligands_raw_d2 %<>% filter(!peptide %in% humaneps) #no. of peptides after filtering: 1,318
 rm(proteome, tempdf, humaneps)
 ```
 
@@ -190,7 +190,7 @@ rm(proteome, tempdf, humaneps)
 ligands_raw_d2$immunogenicity = NA
 ligands_raw_d2$immunogenicity[ligands_raw_d2$activating_ratio == 0] = 0
 ligands_raw_d2$immunogenicity[ligands_raw_d2$activating_ratio > .5] = 1
-ligands_raw_d2 = ligands_raw_d2[!is.na(ligands_raw_d2$immunogenicity),] #1,117
+ligands_raw_d2 = ligands_raw_d2[!is.na(ligands_raw_d2$immunogenicity),] #no. of peptides after filtering: 1,117
 table(ligands_raw_d2$immunogenicity) #0 - 485; 1 - 632
 ```
 
@@ -201,11 +201,11 @@ table(ligands_raw_d2$immunogenicity) #0 - 485; 1 - 632
 length(unique(ligands_raw_d2$peptide[duplicated(ligands_raw_d2$peptide)]))
 #ligands_raw_d2 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
 drop_eps = ligands_raw_d2 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #1 peptide: YAQMWSLMY
-ligands_raw_d2 %<>% filter(!peptide %in% drop_eps) #1,115
+ligands_raw_d2 %<>% filter(!peptide %in% drop_eps) #no. of peptides after filtering: 1,115
 rm(drop_eps)
 
 #Epitope unique
-eps = unique(ligands_raw_d2$peptide) #1,087
+eps = unique(ligands_raw_d2$peptide)
 for(j in 1:length(eps)) {
   tempdf = ligands_raw_d2 %>% filter(peptide == eps[j])
   if(nrow(tempdf) == 1) next()
@@ -213,7 +213,7 @@ for(j in 1:length(eps)) {
   ligands_raw_d2[ligands_raw_d2$peptide == eps[j],] = tempdf
 }
 rm(eps, tempdf, j)
-ligands_raw_d2 = unique(ligands_raw_d2) #1,087
+ligands_raw_d2 = unique(ligands_raw_d2) #no. of peptides after filtering: 1,087
 
 ligands_raw_d2$immunogenicity = factor(ligands_raw_d2$immunogenicity, levels = c("1","0"))
 ```
@@ -223,17 +223,17 @@ ligands_raw_d2$immunogenicity = factor(ligands_raw_d2$immunogenicity, levels = c
 ```{r}
 source("D:/CloudStation/mygit_EXT/ImObsRecognition/clustal_omega_function.R")
 dist_matr = clomega(epitopes = ligands_raw_d2$peptide, similarity = 0.5)
-ligands_raw_d2 %>% filter(!peptide %in% rownames(dist_matr)) %>% pull(peptide) -> dropped_peps_clo #452 peptides
-#writeLines(dropped_peps_clo, "01out/dropped_peps_clo_d2.txt")
+ligands_raw_d2 %>% filter(!peptide %in% rownames(dist_matr)) %>% pull(peptide) -> dropped_eps_clo_d2 #452 peptides
+#writeLines(dropped_eps_clo_d2, "dropped_eps_clo_d2.txt")
 rm(dropped_peps_clo)
 
 ligands_nonhuman_d2 = ligands_raw_d2 %<>% 
-  filter(peptide %in% rownames(dist_matr)) #635
+  filter(peptide %in% rownames(dist_matr)) #no. of peptides after filtering: 635
 rm(dist_matr, clomega)
 table(ligands_raw_d2$immunogenicity) #1: 360, 0: 275
 
 #STEP ...
-ligands_nonhuman_d1 = ligands_raw_d1[!ligands_raw_d1$peptide %in% ligands_nonhuman_d2$peptide,] #3,380
+ligands_nonhuman_d1 = ligands_raw_d1[!ligands_raw_d1$peptide %in% ligands_nonhuman_d2$peptide,] #no. of peptides after filtering: 3,380
 table(ligands_nonhuman_d1$immunogenicity) #1 - 1,093; 0 - 2,287
 rm(ligands_raw_d1, ligands_raw_d2)
 ```
@@ -368,54 +368,7 @@ ligands_nonhuman_d2 %<>%
   select(allele, peptide, immunogenicity, tcem, freqpenta_tcem, pentamer_expression, thymopscore, immunopscore, bl62score, housekeeping_ratio)
 save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2")
 
-```
-
-#Create datasets for supplementary table (dataset 1)
-
-```{r}
-load("ligands_nonhuman_d1")
-ligands_nonhuman_d1 = cbind(ligands_nonhuman_d1, dataset = "d1")
-load("ligands_nonhuman_d2")
-ligands_nonhuman_d2 = cbind(ligands_nonhuman_d2, dataset = "d2")
-
-
-#For FigS seconday anchors
-load("activating_d1")
-secanc_alleles = c("A0203","A0204","A0206","A0301","A2501","A2902","A6802",  
-                   "B0801", "B1402","B1517", "B3701","B4601", 
-                   "C0602","C0704", "C1502", "C1701")
-datasets$secanc = FALSE
-for(i in 1:nrow(datasets)) {
-  if(datasets$allele[i] %in% secanc_alleles) {
-    other_alleles = setdiff(activating$allele[activating$peptide == datasets$peptide[i]],datasets$allele[i])
-    if(length(other_alleles) == 0) {
-      datasets$secanc[i] = TRUE
-    } else if(length(other_alleles) > 0) {
-      if(all(other_alleles %in% secanc_alleles)) {
-        datasets$secanc[i] = TRUE
-      }
-    }
-  }
-}
-table(datasets$secanc)
-table(datasets$secanc[datasets$dataset == "d1"])
-table(datasets$secanc[datasets$dataset == "d2"])
-
-#D1
-ligands_nonhuman = datasets[datasets$dataset == "d1",c("peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "pentamer_expression_group", "thymopscore", "immunopscore", "bl62score", "bl62score_group", "housekeeping_ratio", "secanc")]
-ligands_nonhuman %<>% mutate_at(c(5,7,8,9,11), function(x) round(x,3))
-#write.table(ligands_nonhuman, file = "ligands_nonhuman_d1.txt", quote = F, sep = "\t", dec = ".", row.names = F)
-
-#D2
-ligands_nonhuman = datasets[datasets$dataset == "d2",c("peptide", "tcem", "immunogenicity", "freqpenta_tcem", "pentamer_expression", "pentamer_expression_group", "thymopscore", "immunopscore", "bl62score", "bl62score_group", "housekeeping_ratio", "secanc")]
-ligands_nonhuman %<>% mutate_at(c(5,7,8,9,11), function(x) round(x,3))
-#write.table(ligands_nonhuman, file = "ligands_nonhuman_d2.txt", quote = F, sep = "\t", dec = ".", row.names = F)
-
-```
-
 #D1 & D2
-
-```{r}
 load("ligands_nonhuman_d1")
 ligands_nonhuman_d1 = cbind(ligands_nonhuman_d1, dataset = "d1")
 load("ligands_nonhuman_d2")
@@ -432,3 +385,4 @@ ligands_nonhuman %<>%
   transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
 save(ligands_nonhuman, file = "ligands_nonhuman_d1d2") #4015
 ```
+
