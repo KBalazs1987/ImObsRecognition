@@ -52,7 +52,7 @@ save(activating, file = "activating_d1")
 ```
 
 ##Filter 0 - HLA binding
-
+EZ a lépés a kötési értékeket adja hozzá.
 ```{r eval=FALSE, include=FALSE}
 load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/binding_matrix")
 rownames(binding_matrix$aff) = gsub("HLA-|:", "", rownames(binding_matrix$aff))
@@ -108,7 +108,7 @@ ligands_raw_d1 %<>% filter(!peptide %in% drop_eps) #4,089
 rm(drop_eps)
 
 #Epitope unique
-eps = unique(ligands_raw_d1$peptide) #3,955
+eps = unique(ligands_raw_d1$peptide)
 for(j in 1:length(eps)) {
   tempdf = ligands_raw_d1 %>% filter(peptide == eps[j])
   if(nrow(tempdf) == 1) next()
@@ -116,7 +116,7 @@ for(j in 1:length(eps)) {
   ligands_raw_d1[ligands_raw_d1$peptide == eps[j],] = tempdf
 }
 rm(eps, tempdf, j)
-ligands_raw_d1 = unique(ligands_raw_d1) #3,955
+ligands_raw_d1 = unique(ligands_raw_d1) #no. of peptides after filtering 3,955
 
 ligands_raw_d1$immunogenicity = factor(ligands_raw_d1$immunogenicity, levels = c("1","0"))
 ```
@@ -154,7 +154,7 @@ binding = mhc_ligand_filt %>%
 rm(mhc_ligand_filt)
 ```
 
-##Combine with activating assays
+##Combine with T cell activation assays
 
 ```{r}
 ligands_raw_d2 = binding %>% 
@@ -165,7 +165,7 @@ ligands_raw_d2 %<>%
   filter(n_binding_assay >= 2, binding_ratio > 0.6) #2,345
 ```
 
-##Filter 1 (binding assay, activating assay, binding ratio)
+##Filter 1 (binding assay, T cell activation assay, binding ratio)
 
 ```{r}
 ligands_raw_d2 %<>% 
@@ -232,6 +232,7 @@ ligands_nonhuman_d2 = ligands_raw_d2 %<>%
 rm(dist_matr, clomega)
 table(ligands_raw_d2$immunogenicity) #1: 360, 0: 275
 
+#STEP ...
 ligands_nonhuman_d1 = ligands_raw_d1[!ligands_raw_d1$peptide %in% ligands_nonhuman_d2$peptide,] #3,380
 table(ligands_nonhuman_d1$immunogenicity) #1 - 1,093; 0 - 2,287
 rm(ligands_raw_d1, ligands_raw_d2)
@@ -377,17 +378,6 @@ ligands_nonhuman_d1 = cbind(ligands_nonhuman_d1, dataset = "d1")
 load("ligands_nonhuman_d2")
 ligands_nonhuman_d2 = cbind(ligands_nonhuman_d2, dataset = "d2")
 
-#For FigS5 housekeeping ratio - pentamer expression group
-nb_of_groups = 20
-ligands_nonhuman_d1$pentamer_expression_group = cut(ligands_nonhuman_d1$pentamer_expression, unique(quantile(ligands_nonhuman_d1$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
-table(ligands_nonhuman_d1$pentamer_expression_group)
-ligands_nonhuman_d2$pentamer_expression_group = cut(ligands_nonhuman_d2$pentamer_expression, unique(quantile(ligands_nonhuman_d2$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
-table(ligands_nonhuman_d2$pentamer_expression_group)
-rm(nb_of_groups)
-
-#For Fig3B similarity group
-datasets = rbind(ligands_nonhuman_d1, ligands_nonhuman_d2)
-datasets$bl62score_group = cut(datasets$bl62score, 25)
 
 #For FigS seconday anchors
 load("activating_d1")

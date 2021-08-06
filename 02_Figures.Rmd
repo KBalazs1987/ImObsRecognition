@@ -11,7 +11,7 @@ output:
 #Setup
 
 ```{r}
-setwd("D:/CloudStation/pentamer_project/PNAS_revision/")
+setwd("D:/CloudStation/mygit/ImObsRecognition/")
 library(ggplot2)
 library(magrittr)
 library(dplyr)
@@ -31,21 +31,10 @@ library(plyr)
 library(protr)
 library(forestmodel)
 library(fastmatch)
-#library(bsts)
-#library(ggthemes)
-#library(gt)
-# library(forcats)
-# library(circlize)
-# library(tibble)
-# library(Rmpfr)
-# library(tidyr)
-# library(Rfast)
+library(tidyr)
 mypal <- pal_npg("nrc", alpha = 0.7)(9)
 mypal
-# show_col(mypal)
-# #expression(italic(P) == 7.36 ~ '*' ~ 10^{-4})
-# #expression(italic(P) == 0.004)
-# rm(mypal)
+rm(mypal)
 # #"#E64B35B2" "#4DBBD5B2" "#00A087B2" "#3C5488B2" "#F39B7FB2" "#8491B4B2" "#91D1C2B2" "#DC0000B2" "#7E6148B2"
 ```
 
@@ -53,7 +42,7 @@ mypal
 ##A TCEM frequency
 
 ```{r}
-load("objects/ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2")
 wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d1"))
 wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d2"))
 
@@ -91,7 +80,7 @@ rm(ligands_nonhuman)
 ###Loess D1
 
 ```{r}
-load("objects/ligands_nonhuman_d1")
+load("ligands_nonhuman_d1")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman$trig)
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
@@ -121,7 +110,7 @@ rm(ligands_nonhuman, plotdata)
 ###Loess D2
 
 ```{r}
-load("objects/ligands_nonhuman_d2")
+load("ligands_nonhuman_d2")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman$trig)
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
@@ -152,7 +141,7 @@ rm(ligands_nonhuman, plotdata)
 ###Density
 
 ```{r}
-load("objects/ligands_nonhuman_d1")
+load("ligands_nonhuman_d1")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
 
@@ -183,7 +172,7 @@ fig1_4 <- ggplot() +
     axis.line = element_line(colour = "black"))
 fig1_4
 
-load("objects/ligands_nonhuman_d2")
+load("ligands_nonhuman_d2")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
 
@@ -223,7 +212,7 @@ rm(fig1_4, fig1_5, ligands_nonhuman)
 ###Thymoproteasome
 
 ```{r}
-load("objects/ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2")
 ligands_nonhuman %<>% filter(!is.na(thymopscore))
 table(ligands_nonhuman$group)
 wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
@@ -259,7 +248,7 @@ rm(ligands_nonhuman)
 ###Immunoproteasome
 
 ```{r}
-load("objects/ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2")
 ligands_nonhuman %<>% filter(!is.na(immunopscore))
 table(ligands_nonhuman$group)
 
@@ -306,11 +295,11 @@ fig1 = grid.arrange(grobs = c(lapply(list(fig1_1, fig1_2, fig1_3), "+", margin12
 #ggsave(fig1, filename = "main_plots_rs/Fig1_25.png", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
-##Data calculation for Fig.1.D 
+##Data calculation for Fig1D 
 
 ```{r}
-load("objects/ligands_nonhuman_d1")
-load("objects/ligands_nonhuman_d2")
+load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d2")
 
 ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #1: <median, 2: >= median. Median = 4.
 table(ligands_nonhuman$freqpenta_tcem_group)
@@ -487,7 +476,7 @@ rm(df_immuno, stat_individual)
 lay = rbind(c(1,2,3,4), c(1,2,3,4))
 margin = theme(plot.margin = unit(c(0.1,0.1,0.1,.3), "cm"))
 fig2 = grid.arrange(grobs = lapply(list(fig2a,fig2b,fig2c,fig2d), "+", margin), layout_matrix = lay)
-ggsave(fig2, filename = "main_plots_rs/Fig2_9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+#ggsave(fig2, filename = "Fig2_9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 
 rm(lay, margin)
 ```
@@ -498,7 +487,7 @@ rm(lay, margin)
 Dataset 1 és 2
 
 ```{r}
-load("objects/ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2")
 ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), include.lowest = T, right = F)
 wilcox.test(bl62score ~ freqpenta_tcem_group, ligands_nonhuman)$p.value
 table(ligands_nonhuman$freqpenta_tcem_group)
@@ -530,7 +519,7 @@ rm(ligands_nonhuman)
 ##B Similarity - D1,D2
 
 ```{r}
-load("objects/ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2")
 #hist(ligands_nonhuman$bl62score)
 ligands_nonhuman$bl62score_group = cut(ligands_nonhuman$bl62score, 25)
 table(ligands_nonhuman$bl62score_group)
@@ -1523,10 +1512,73 @@ ggsave(fig_forest, filename = "supp_plots_rs/figS8_forestplot_13.png", width = 1
 ```
 
 #FigS9 Secondary anchors
+##Create datasets
+
+```{r}
+load("activating_d1")
+load("ligands_nonhuman_d1")
+#drop those peptides which occur exclusively with alleles containing secondary anchor residues in TCEM position
+#"A2902"
+secanc_alleles = c("A0203","A0204","A0206","A0301","A2501","A2902","A6802",  
+                   "B0801", "B1402","B1517", "B3701","B4601", 
+                   "C0602","C0704", "C1502", "C1701")
+ligands_nonhuman$excluded = FALSE
+for(i in 1:nrow(ligands_nonhuman)) {
+  if(ligands_nonhuman$allele[i] %in% secanc_alleles) {
+    other_alleles = setdiff(activating$allele[activating$epitope == ligands_nonhuman$epitope[i]],ligands_nonhuman$allele[i])
+    if(length(other_alleles) == 0) {
+      ligands_nonhuman$excluded[i] = TRUE
+    } else if(length(other_alleles) > 0) {
+      if(all(other_alleles %in% secanc_alleles)) {
+        ligands_nonhuman$excluded[i] = TRUE
+      }
+    }
+  }
+}
+table(ligands_nonhuman$excluded)
+ligands_nonhuman %<>% filter(excluded == FALSE)
+save(ligands_nonhuman, file = "ligands_nonhuman_d1_wosecanc")
+dataset_1 = cbind(ligands_nonhuman[,c("allele", "epitope", "trig", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
+
+
+load("ligands_nonhuman_d2")
+ligands_nonhuman$excluded = FALSE
+for(i in 1:nrow(ligands_nonhuman)) {
+  if(ligands_nonhuman$allele[i] %in% secanc_alleles) {
+    other_alleles = setdiff(activating$allele[activating$epitope == ligands_nonhuman$epitope[i]],ligands_nonhuman$allele[i])
+    if(length(other_alleles) == 0) {
+      ligands_nonhuman$excluded[i] = TRUE
+    } else if(length(other_alleles) > 0) {
+      if(all(other_alleles %in% secanc_alleles)) {
+        ligands_nonhuman$excluded[i] = TRUE
+      }
+    }
+  }
+}
+table(ligands_nonhuman$excluded)
+ligands_nonhuman %<>% filter(excluded == FALSE)
+save(ligands_nonhuman, file = "ligands_nonhuman_d2_wosecanc")
+dataset_2 = cbind(ligands_nonhuman[,c("allele", "epitope", "trig", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
+
+ligands_nonhuman = rbind(dataset_1, dataset_2)
+rm(dataset_1, dataset_2)
+ligands_nonhuman %<>% 
+    mutate(group = case_when(
+    .$dataset == "d1" & .$trig == 0 ~ "d1_nim",
+    .$dataset == "d1" & .$trig == 1 ~ "d1_im",
+    .$dataset == "d2" & .$trig == 0 ~ "d2_nim",
+    .$dataset == "d2" & .$trig == 1 ~ "d2_im",
+  )) %>% 
+  transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
+save(ligands_nonhuman, file = "ligands_nonhuman_d1d2_wosecanc") #3930
+
+```
+
+
 ##A TCEM frequency
 
 ```{r}
-load("21out/ligands_nonhuman_d1d2_wosecanc")
+load("ligands_nonhuman_d1d2_wosecanc")
 wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d1"))
 wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d2"))
 
@@ -1564,7 +1616,7 @@ rm(ligands_nonhuman)
 ###Loess D1
 
 ```{r}
-load("21out/ligands_nonhuman_d1_wosecanc")
+load("ligands_nonhuman_d1_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman$trig)
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
@@ -1594,7 +1646,7 @@ rm(ligands_nonhuman, plotdata)
 ###Loess D2
 
 ```{r}
-load("21out/ligands_nonhuman_d2_wosecanc")
+load("ligands_nonhuman_d2_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman$trig)
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
@@ -1625,7 +1677,7 @@ rm(ligands_nonhuman, plotdata)
 ###Density
 
 ```{r}
-load("21out/ligands_nonhuman_d1_wosecanc")
+load("ligands_nonhuman_d1_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
 
@@ -1656,7 +1708,7 @@ figS9_4 <- ggplot() +
     axis.line = element_line(colour = "black"))
 figS9_4
 
-load("21out/ligands_nonhuman_d2_wosecanc")
+load("ligands_nonhuman_d2_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
 
@@ -1696,7 +1748,7 @@ rm(figS9_4, figS9_5, ligands_nonhuman)
 ###Thymoproteasome
 
 ```{r}
-load("21out/ligands_nonhuman_d1d2_wosecanc")
+load("ligands_nonhuman_d1d2_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(thymopscore))
 table(ligands_nonhuman$group)
 wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
@@ -1732,7 +1784,7 @@ rm(ligands_nonhuman)
 ###Immunoproteasome
 
 ```{r}
-load("21out/ligands_nonhuman_d1d2_wosecanc")
+load("ligands_nonhuman_d1d2_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(immunopscore))
 table(ligands_nonhuman$group)
 
@@ -1775,14 +1827,14 @@ margin45 = theme(plot.margin = unit(c(.1,.1,.1,.25), "cm"))
 figS9 = grid.arrange(grobs = c(lapply(list(figS9_1, figS9_2, figS9_3), "+", margin12367), 
                               lapply(list(figS9_45), "+", margin45), 
                               lapply(list(figS9_6, figS9_7), "+", margin12367)), layout_matrix = lay)
-ggsave(figS9, filename = "supp_plots_rs/FigS9_secanc.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+#ggsave(figS9, filename = "FigS9_secanc.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
-##Freqtable
+##Data calculation for FigS9D
 
 ```{r}
-load("21out/ligands_nonhuman_d1_wosecanc")
-load("21out/ligands_nonhuman_d2_wosecanc")
+load("ligands_nonhuman_d1_wosecanc")
+load("ligands_nonhuman_d2_wosecanc")
 
 ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #1: <median, 2: >= median. Median = 4.
 table(ligands_nonhuman$freqpenta_tcem_group)
@@ -1792,8 +1844,6 @@ ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_e
 table(ligands_nonhuman$pentamer_expression_group)
 fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(1,2)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(1,2)])
 fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(2,3)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(2,3)])
-1/1.32968
-1/1.796378
 
 ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman$thymopscore_group)
@@ -1808,7 +1858,7 @@ fisher.test(ligands_nonhuman$trig, ligands_nonhuman$immunopscore_group)
 
 ```{r}
 chowell = read.delim("../objects/Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #9888
-load("objects/ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2")
 chowell = chowell[chowell$dissimilarity > 0,] #4263
 chowell = chowell[is.na(fmatch(chowell$nmer, ligands_nonhuman$epitope)),] #3430
 rm(ligands_nonhuman)
@@ -1877,8 +1927,7 @@ figS10_chowell = ggplot(groups, aes(group_num, ratio)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 figS10_chowell
-ggsave(figS10_chowell, filename = "supp_plots_rs/figS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
-
+#ggsave(figS10_chowell, filename = "figS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
 rm(chowell, groups, b, b_exp, wm)
 ```
 
@@ -1970,8 +2019,8 @@ ggsave(figs11, filename = "supp_plots_rs/FigS11.png", width = 22, height = 11, u
 #Table S2 - Fishers
 
 ```{r}
-load("objects/ligands_nonhuman_d1")
-load("objects/ligands_nonhuman_d2")
+load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d2")
 
 #TCEMFREQ
 dataset = ligands_nonhuman
@@ -2026,4 +2075,87 @@ fisher.test(dataset$group, dataset$trig)
 ```
 
 #Table S3 Aminosav
+
+```{r}
+resdf = expand.grid(ds = c("d1", "d2", "d1d2"), type = c("epitope", "tcem"), excludedaa = rownames(AABLOSUM62), stringsAsFactors = F)
+resdf %<>% mutate(n = NA, n_im = NA, n_nim = NA,
+                  freqpenta_med = NA, freqpenta_med_im = NA, freqpenta_med_nim = NA, freqpenta_wilp = NA, freqpenta_fishp = NA, freqpenta_fishor = NA,
+                  expr_fishp1 = NA, expr_fishor1 = NA, expr_fishp2 = NA, expr_fishor2 = NA,
+                  thymopscore_med_im = NA, thymopscore_med_nim = NA, thymopscore_wilp = NA, thymopscore_fishp = NA, thymopscore_fishor = NA,
+                  immunopscore_med_im = NA, immunopscore_med_nim = NA, immunopscore_wilp = NA, immunopscore_fishp = NA, immunopscore_fishor = NA)
+for(i in 1:nrow(resdf)) {
+  print(i)
+  load(paste0("ligands_nonhuman_", resdf$ds[i]))
+  if(resdf$type[i] == "epitope") {ligands_nonhuman %<>% filter(!grepl(resdf$excludedaa[i], epitope))} else {ligands_nonhuman %<>% filter(!grepl(resdf$excludedaa[i], tcem))}
+  resdf$n[i] = ligands_nonhuman %>% nrow()
+  resdf$n_im[i] = ligands_nonhuman %>% filter(trig == 1) %>% nrow()
+  resdf$n_nim[i] = ligands_nonhuman %>% filter(trig == 0) %>% nrow()
+  #TCEM FREQUENCY
+  resdf$freqpenta_med[i] = ligands_nonhuman %>% pull(freqpenta_tcem) %>% median()
+  resdf$freqpenta_med_im[i] = ligands_nonhuman %>% filter(trig == 1) %>% pull(freqpenta_tcem) %>% median()
+  resdf$freqpenta_med_nim[i] = ligands_nonhuman %>% filter(trig == 0) %>% pull(freqpenta_tcem) %>% median()
+  resdf$freqpenta_wilp[i] = wilcox.test(freqpenta_tcem ~ trig, ligands_nonhuman)$p.value
+  ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+  ft1 = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(trig == 0, freqpenta_tcem_group == 2) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, freqpenta_tcem_group == 2) %>% nrow(), 
+    ligands_nonhuman %>% filter(trig == 0, freqpenta_tcem_group == 1) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, freqpenta_tcem_group == 1) %>% nrow()),
+    nrow = 2, ncol = 2))
+  resdf$freqpenta_fishp[i] = ft1$p.value
+  resdf$freqpenta_fishor[i] = ft1$estimate
+  #EXPRESSION
+  ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+  ft2 = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(trig == 0, pentamer_expression_group == 2, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, pentamer_expression_group == 2, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(), 
+    ligands_nonhuman %>% filter(trig == 0, pentamer_expression_group == 1, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, pentamer_expression_group == 1, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow()),
+    nrow = 2, ncol = 2))
+  resdf$expr_fishp1[i] = ft2$p.value
+  resdf$expr_fishor1[i] = ft2$estimate
+  ft3 = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(trig == 0, pentamer_expression_group == 2, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, pentamer_expression_group == 2, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(), 
+    ligands_nonhuman %>% filter(trig == 0, pentamer_expression_group == 3, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, pentamer_expression_group == 3, !is.na(trig), !is.na(pentamer_expression_group)) %>% nrow()),
+    nrow = 2, ncol = 2))
+  resdf$expr_fishp2[i] = ft3$p.value
+  resdf$expr_fishor2[i] = ft3$estimate
+  #THYMOPSCORE
+  ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+  resdf$thymopscore_med_im[i] = ligands_nonhuman %>% filter(trig == 1) %>% pull(thymopscore) %>% median(na.rm = T)
+  resdf$thymopscore_med_nim[i] = ligands_nonhuman %>% filter(trig == 0) %>% pull(thymopscore) %>% median(na.rm = T)
+  resdf$thymopscore_wilp[i] = wilcox.test(thymopscore ~ trig, ligands_nonhuman)$p.value
+  ft4 = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(trig == 0, thymopscore_group == 2) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, thymopscore_group == 2) %>% nrow(), 
+    ligands_nonhuman %>% filter(trig == 0, thymopscore_group == 1) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, thymopscore_group == 1) %>% nrow()),
+    nrow = 2, ncol = 2))
+  resdf$thymopscore_fishp[i] = ft4$p.value
+  resdf$thymopscore_fishor[i] = ft4$estimate
+  #IMMUNOPSCORE
+  ligands_nonhuman$immunopscore_group = cut(x = ligands_nonhuman$immunopscore, breaks = quantile(ligands_nonhuman$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+  resdf$immunopscore_med_im[i] = ligands_nonhuman %>% filter(trig == 1) %>% pull(immunopscore) %>% median(na.rm = T)
+  resdf$immunopscore_med_nim[i] = ligands_nonhuman %>% filter(trig == 0) %>% pull(immunopscore) %>% median(na.rm = T)
+  resdf$immunopscore_wilp[i] = wilcox.test(immunopscore ~ trig, ligands_nonhuman)$p.value
+  ft5 = fisher.test(matrix(c(
+    ligands_nonhuman %>% filter(trig == 0, immunopscore_group == 2) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, immunopscore_group == 2) %>% nrow(), 
+    ligands_nonhuman %>% filter(trig == 0, immunopscore_group == 1) %>% nrow(),
+    ligands_nonhuman %>% filter(trig == 1, immunopscore_group == 1) %>% nrow()),
+    nrow = 2, ncol = 2))
+  resdf$immunopscore_fishp[i] = ft5$p.value
+  resdf$immunopscore_fishor[i] = ft5$estimate
+  rm(ft1, ft2, ft3, ft4, ft5, ligands_nonhuman)
+}
+aalevels = resdf %>% filter(ds == "d2", type == "tcem") %>% arrange(n) %>% pull(excludedaa)
+resdf$excludedaa = factor(resdf$excludedaa, levels = aalevels)
+resdf$ds = factor(resdf$ds, levels = c("d1", "d2", "d1d2"))
+
+resdf %<>% mutate_at(7:26, function(x) signif(x, digits = 3))
+#write.table(resdf, file = "results_when_aa_excluded.txt", quote = F, sep = "\t", dec = ".", row.names = F)
+
+```
 
