@@ -1,0 +1,2029 @@
+---
+title: "Plots"
+author: "Balazs Koncz"
+date: '2020 03 06 '
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+#Setup
+
+```{r}
+setwd("D:/CloudStation/pentamer_project/PNAS_revision/")
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(Hmisc)
+library(ggpubr)
+library(gridExtra)
+library(fastmatch)
+library(ROCR)
+library(OptimalCutpoints)
+library(grid)
+library(ggsci)
+library(scales)
+library(ComplexHeatmap)
+library(ggrepel)
+library(png)
+library(plyr)
+library(protr)
+library(forestmodel)
+library(fastmatch)
+#library(bsts)
+#library(ggthemes)
+#library(gt)
+# library(forcats)
+# library(circlize)
+# library(tibble)
+# library(Rmpfr)
+# library(tidyr)
+# library(Rfast)
+mypal <- pal_npg("nrc", alpha = 0.7)(9)
+mypal
+# show_col(mypal)
+# #expression(italic(P) == 7.36 ~ '*' ~ 10^{-4})
+# #expression(italic(P) == 0.004)
+# rm(mypal)
+# #"#E64B35B2" "#4DBBD5B2" "#00A087B2" "#3C5488B2" "#F39B7FB2" "#8491B4B2" "#91D1C2B2" "#DC0000B2" "#7E6148B2"
+```
+
+#Fig1
+##A TCEM frequency
+
+```{r}
+load("objects/ligands_nonhuman_d1d2")
+wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+
+table(ligands_nonhuman$group)
+
+fig1_1 = ggplot(ligands_nonhuman, aes(x = group, y = freqpenta_tcem, color = trig, fill = trig)) + 
+  geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
+  scale_x_discrete(labels = c("+","-","+","-")) +
+  coord_cartesian(ylim = c(0,170)) +
+  scale_y_continuous(trans = "pseudo_log", breaks = c(0,3,4,5,10,100)) +
+  scale_color_manual(values = c("#DC0000B2","#3C5488B2")) +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"), .3)) +
+  geom_segment(aes(x = 2.5, y = -10, xend = 2.5, yend = 100), color = "grey") +
+  annotate(geom = "text", x = 1.5, y = 130, color = "black", size = 2, label = "paste(italic(P), \" = 9 x \", 10 ^ -9)", parse = TRUE) +
+  annotate(geom = "text", x = 3.5, y = 128, color = "black", size = 2, label = "paste(italic(P), \" = 0.003\")", parse = TRUE) +
+  annotate(geom = "text", x = c(1.5,3.5), y = 170, label = c("DS1","DS2"), color = "black", size = 2) +
+  labs(tag = "A", x = "Immunogenicity", y = "TCEM frequency") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig1_1
+rm(ligands_nonhuman)
+```
+
+##B Expression
+###Loess D1
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+table(ligands_nonhuman$trig)
+ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$trig)
+plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
+fig1_2 = ggplot(plotdata, aes(x, y)) + 
+  geom_point(size = .2) +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  coord_cartesian(xlim = c(0,1)) +
+  annotate(geom = "text", x = .91, y = max(plotdata$y), label = "DS1", color = "black", size = 2) +
+  labs(tag = "B", x = "Percentile of TCEM expression", y = "Probability of being immunogenic") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 7),
+    axis.title.y = element_text(size = 7),
+    axis.text.x = element_text(size = 6, color = "black"),
+    axis.text.y = element_text(size = 6, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig1_2
+rm(ligands_nonhuman, plotdata)
+```
+
+###Loess D2
+
+```{r}
+load("objects/ligands_nonhuman_d2")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+table(ligands_nonhuman$trig)
+ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+
+plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$trig)
+plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
+fig1_3 = ggplot(plotdata, aes(x, y)) + 
+  geom_point(size = .2) +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  scale_x_continuous(limits = c(0,1)) +
+  annotate(geom = "text", x = .91, y = max(plotdata$y), label = "DS2", color = "black", size = 2) +
+  labs(tag = " ", x = "Percentile of TCEM expression", y = "Probability of being immunogenic") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 7),
+    axis.title.y = element_text(size = 7),
+    axis.text.x = element_text(size = 6, color = "black"),
+    axis.text.y = element_text(size = 6, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig1_3
+rm(ligands_nonhuman, plotdata)
+```
+
+###Density
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+
+fig1_4 <- ggplot() + 
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 0,]) +
+  coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
+  annotate(geom = "text", x = .91, y = 1.2, label = "DS1", color = "black", size = 2) +
+  labs(tag = " ", x = "Percentile of TCEM expression", y = "Density", fill = "Group") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 7, vjust = 0),
+    axis.title.y = element_text(size = 7, vjust = 5),
+    axis.text.x = element_text(size = 6, color = "black"),
+    axis.text.y = element_text(size = 6, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    legend.title = element_text(size = 6, color = "black"),
+    legend.text = element_text(size = 6, color = "black"),
+    legend.box.spacing = unit(0,"cm"),
+    legend.key.height = unit(.1, "cm"),
+    legend.key.width = unit(.2, "cm"),
+    legend.direction = "horizontal",
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig1_4
+
+load("objects/ligands_nonhuman_d2")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+
+fig1_5 <- ggplot() + 
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 0,]) +
+  coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
+  labs(tag = " ", x = "Percentile of TCEM expression", y = "Density", fill = "Group") +
+  annotate(geom = "text", x = .91, y = 1.2, label = "DS2", color = "black", size = 2) +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 7, vjust = 0),
+    axis.title.y = element_text(size = 7, vjust = 3),
+    axis.text.x = element_text(size = 6, color = "black"),
+    axis.text.y = element_text(size = 6, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    legend.title = element_text(size = 6, color = "black"),
+    legend.text = element_text(size = 6, color = "black"),
+    legend.box.spacing = unit(0,"cm"),
+    legend.key.height = unit(.1, "cm"),
+    legend.key.width = unit(.2, "cm"),
+    legend.direction = "horizontal",
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig1_5
+
+fig1_45 = ggarrange(fig1_4, fig1_5, ncol=2, common.legend = TRUE, legend = "top")
+fig1_45
+rm(fig1_4, fig1_5, ligands_nonhuman)
+```
+
+##C Proteasomal cleavage
+###Thymoproteasome
+
+```{r}
+load("objects/ligands_nonhuman_d1d2")
+ligands_nonhuman %<>% filter(!is.na(thymopscore))
+table(ligands_nonhuman$group)
+wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+
+fig1_6 = ggplot(ligands_nonhuman, aes(x = group, y = thymopscore, color = trig, fill = trig)) + 
+  geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
+  scale_x_discrete(labels = c("+","-","+","-")) +
+  coord_cartesian(ylim = c(.75,1.25)) +
+  scale_color_manual(values = c("#DC0000B2","#3C5488B2")) +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"), .3)) +
+  geom_segment(aes(x = 2.5, y = .7, xend = 2.5, yend = 1.2), color = "grey") +
+  annotate(geom = "text", x = 1.5, y = 1.222, color = "black", size = 2, label = "paste(italic(P), \" = 0.003\")", parse = TRUE) +
+  annotate(geom = "text", x = 3.5, y = 1.222, color = "black", size = 2, label = "paste(italic(P), \" = 0.010\")", parse = TRUE) +
+  annotate(geom = "text", x = c(1.5,3.5), y = 1.25, label = c("DS1","DS2"), color = "black", size = 2) +
+  labs(tag = "C", x = "Immunogenicity", y = "Thymoproteasomal cleavage score") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig1_6
+rm(ligands_nonhuman)
+```
+
+###Immunoproteasome
+
+```{r}
+load("objects/ligands_nonhuman_d1d2")
+ligands_nonhuman %<>% filter(!is.na(immunopscore))
+table(ligands_nonhuman$group)
+
+wilcox.test(immunopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(immunopscore ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+
+fig1_7 = ggplot(ligands_nonhuman, aes(x = group, y = immunopscore, color = trig, fill = trig)) + 
+  geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
+  scale_x_discrete(labels = c("+","-","+","-")) +
+  coord_cartesian(ylim = c(.55,1.45)) +
+  scale_color_manual(values = c("#DC0000B2","#3C5488B2")) +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"), .3)) +
+  geom_segment(aes(x = 2.5, y = 0.5, xend = 2.5, yend = 1.35), color = "grey") +
+  annotate(geom = "text", x = 1.5, y = 1.4, color = "black", size = 2, label = "paste(italic(P), \" = 0.145\")", parse = TRUE) +
+  annotate(geom = "text", x = 3.5, y = 1.4, color = "black", size = 2, label = "paste(italic(P), \" = 0.299\")", parse = TRUE) +
+  annotate(geom = "text", x = c(1.5,3.5), y = 1.45, label = c("DS1", "DS2"), color = "black", size = 2) +
+  labs(tag = "", x = "Immunogenicity", y = "Immunoproteasomal cleavage score") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig1_7
+rm(ligands_nonhuman)
+```
+
+##COMBINE
+
+```{r}
+lay = cbind(c(1,1,1,1),c(1,1,1,1),c(1,1,1,1),c(2,2,4,4),c(2,2,4,4),c(2,2,4,4),c(2,2,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(5,5,5,5),c(5,5,5,5),c(5,5,5,5),c(6,6,6,6),c(6,6,6,6),c(6,6,6,6))
+margin12367 = theme(plot.margin = unit(c(.1,.1,.24,.1), "cm"))
+margin45 = theme(plot.margin = unit(c(.1,.1,.1,.25), "cm"))
+fig1 = grid.arrange(grobs = c(lapply(list(fig1_1, fig1_2, fig1_3), "+", margin12367), 
+                              lapply(list(fig1_45), "+", margin45), 
+                              lapply(list(fig1_6, fig1_7), "+", margin12367)), layout_matrix = lay)
+#ggsave(fig1, filename = "main_plots_rs/Fig1_25.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+#ggsave(fig1, filename = "main_plots_rs/Fig1_25.png", width = 22, height = 10, units = "cm", dpi = "retina")
+```
+
+##Data calculation for Fig.1.D 
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+load("objects/ligands_nonhuman_d2")
+
+ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #1: <median, 2: >= median. Median = 4.
+table(ligands_nonhuman$freqpenta_tcem_group)
+fisher.test(ligands_nonhuman$trig, ligands_nonhuman$freqpenta_tcem_group)
+
+ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$pentamer_expression_group)
+fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(1,2)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(1,2)])
+fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(2,3)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(2,3)])
+#1/1.347172
+#1/1.818366
+
+ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$thymopscore_group)
+fisher.test(ligands_nonhuman$trig, ligands_nonhuman$thymopscore_group)
+
+ligands_nonhuman$immunopscore_group = cut(x = ligands_nonhuman$immunopscore, breaks = quantile(ligands_nonhuman$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$immunopscore_group)
+fisher.test(ligands_nonhuman$trig, ligands_nonhuman$immunopscore_group)
+```
+
+thymocutoff = 0.914470
+
+#Fig2 - COVID
+##A TCEM
+
+```{r}
+load("../articleplots_objects/stat_individual")
+
+df_tcemfreq = data.frame(fraction = c(stat_individual[,"tcemfreq_0_3"], (stat_individual[,"tcell_tcemfreq_4_7"] + stat_individual[,"tcell_tcemfreq_8_inf"]) / (stat_individual[,"bound_tcemfreq_4_7"] + stat_individual[,"bound_tcemfreq_8_inf"])), group = rep(c("0-3","4-"), each = nrow(stat_individual)), IDs = rep(rownames(stat_individual), 2))
+
+wilcox.test(df_tcemfreq$fraction[df_tcemfreq$group == "0-3"], df_tcemfreq$fraction[df_tcemfreq$group == "4-"], paired = T)$p.value
+
+fig2a = ggplot(df_tcemfreq, aes(x = group, y = fraction, color = group, fill = group)) + 
+  geom_boxplot(lwd = .5, width = .6, outlier.size = .1) +
+  geom_line(aes(group = IDs), linetype = "dashed", color = "grey", size = .3) + 
+  geom_point(aes(color = group), size = 0.7) + 
+  scale_x_discrete(labels = c("Low"="0-3", "High"="4-")) +
+  coord_cartesian(ylim = c(0.25,1.1)) +
+  scale_y_continuous(breaks = c(0.4,0.6,0.8,1)) +
+  scale_color_manual(values = c("#3C5488B2", "#DC0000B2")) +
+  scale_fill_manual(values = alpha(c("#3C5488B2","#DC0000B2"), .3)) +
+  annotate(geom = "text", x = 1.5, y = 1.103, color = "black", size = 2, label = "paste(italic(P), \" = 2 x \", 10 ^ -4)", parse = TRUE) +
+  labs(tag = "A", x = "TCEM frequency", y = expression(Fraction~of~peptides~with~specific~CD8^{"+"}~T~cells)) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig2a
+rm(df_tcemfreq, stat_individual)
+```
+
+##B EXP
+
+```{r}
+load("../articleplots_objects/stat_individual")
+
+df_tcemexpr = data.frame(fraction = c(stat_individual[,"expr_1st_tertile"], stat_individual[,"expr_2nd_tertile"], stat_individual[,"expr_3rd_tertile"]), group = factor(rep(c("Low","Medium","High"), each = nrow(stat_individual)), levels = c("Low", "Medium", "High")), IDs = rep(rownames(stat_individual), 3))
+
+wilcox.test(df_tcemexpr$fraction[df_tcemexpr$group == "Low"], df_tcemexpr$fraction[df_tcemexpr$group == "Medium"], paired = T)$p.value
+wilcox.test(df_tcemexpr$fraction[df_tcemexpr$group == "Medium"], df_tcemexpr$fraction[df_tcemexpr$group == "High"], paired = T)$p.value
+
+fig2b = ggplot(df_tcemexpr, aes(x = group, y = fraction, color = group, fill = group)) + 
+  geom_boxplot(lwd = .5, width = .6, outlier.size = .1) +
+  geom_line(aes(group = IDs), linetype = "dashed", color = "grey", size = .3) + 
+  geom_point(aes(color = group), size = 0.7) + 
+  coord_cartesian(ylim = c(0.25,1.1)) +
+  scale_y_continuous(breaks = c(0.4,0.6,0.8,1)) +
+  scale_color_manual(values = c("#3C5488B2","#00A087B2","#DC0000B2")) +
+  scale_fill_manual(values = alpha(c("#3C5488B2","#00A087B2","#DC0000B2"), .3)) +
+  annotate(geom = "text", x = 1.5, y = 1.103, color = "black", size = 2, label = "paste(italic(P), \" = 3 x \", 10 ^ -4)", parse = TRUE) +
+  annotate(geom = "text", x = 2.6, y = 1.1, color = "black", size = 2, label = "paste(italic(P), \" = 0.001 \")", parse = TRUE) +
+  labs(tag = "B", x = "TCEM expression in cTECs", y = expression(Fraction~of~peptides~with~specific~CD8^{"+"}~T~cells)) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig2b
+
+rm(df_tcemexpr, stat_individual)
+```
+
+##C TP
+
+```{r}
+load("../articleplots_objects/stat_individual")
+
+df_thymo = data.frame(fraction = c(stat_individual[,"thymo_1st_tertile"], (stat_individual[,"tcell_tcemthymo_2nd_tertile"] + stat_individual[,"tcell_tcemthymo_3rd_tertile"]) / (stat_individual[,"bound_tcemthymo_2nd_tertile"] + stat_individual[,"bound_tcemthymo_3rd_tertile"])), group = factor(rep(c("Low","High"), each = nrow(stat_individual)), levels = c("Low", "High")), IDs = rep(rownames(stat_individual), 2))
+
+wilcox.test(df_thymo$fraction[df_thymo$group == "Low"], df_thymo$fraction[df_thymo$group == "High"], paired = T)$p.value
+
+fig2c = ggplot(df_thymo, aes(x = group, y = fraction, color = group, fill = group)) + 
+  geom_boxplot(lwd = .5, width = .6, outlier.size = .1) +
+  geom_line(aes(group = IDs), linetype = "dashed", color = "grey", size = .3) + 
+  geom_point(aes(color = group), size = 0.7) + 
+  coord_cartesian(ylim = c(0.25,1.1)) +
+  scale_y_continuous(breaks = c(0.4,0.6,0.8,1)) +
+  scale_color_manual(values = c("#3C5488B2", "#DC0000B2")) +
+  scale_fill_manual(values = alpha(c("#3C5488B2","#DC0000B2"), .3)) +
+  annotate(geom = "text", x = 1.5, y = 1.1, color = "black", size = 2, label = "paste(italic(P), \" = 0.001 \")", parse = TRUE) +
+  labs(tag = "C", x = "TP cleavage score", y = expression(Fraction~of~peptides~with~specific~CD8^{"+"}~T~cells)) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig2c
+
+rm(df_thymo, stat_individual)
+```
+
+##D IP
+
+```{r}
+load("../articleplots_objects/stat_individual")
+
+df_immuno = data.frame(fraction = c(stat_individual[,"immuno_1st_tertile"], (stat_individual[,"tcell_tcemimmuno_2nd_tertile"] + stat_individual[,"tcell_tcemimmuno_3rd_tertile"]) / (stat_individual[,"bound_tcemimmuno_2nd_tertile"] + stat_individual[,"bound_tcemimmuno_3rd_tertile"])), group = factor(rep(c("Low","High"), each = nrow(stat_individual)), levels = c("Low", "High")), IDs = rep(rownames(stat_individual), 2))
+
+wilcox.test(df_immuno$fraction[df_immuno$group == "Low"], df_immuno$fraction[df_immuno$group == "High"], paired = T)$p.value
+
+fig2d = ggplot(df_immuno, aes(x = group, y = fraction, color = group, fill = group)) + 
+  geom_boxplot(lwd = .5, width = .6, outlier.size = .1) +
+  geom_line(aes(group = IDs), linetype = "dashed", color = "grey", size = .3) + 
+  geom_point(aes(color = group), size = 0.7) + 
+  coord_cartesian(ylim = c(0.25,1.1)) +
+  scale_y_continuous(breaks = c(0.4,0.6,0.8,1)) +
+  scale_color_manual(values = c("#3C5488B2", "#DC0000B2")) +
+  scale_fill_manual(values = alpha(c("#3C5488B2","#DC0000B2"), .3)) +
+  annotate(geom = "text", x = 1.5, y = 1.1, color = "black", size = 2, label = "paste(italic(P), \" = 0.151 \")", parse = TRUE) +
+  labs(tag = "D", x = "IP cleavage score", y = expression(Fraction~of~peptides~with~specific~CD8^{"+"}~T~cells)) +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig2d
+
+rm(df_immuno, stat_individual)
+```
+
+##COMBINE
+
+```{r}
+lay = rbind(c(1,2,3,4), c(1,2,3,4))
+margin = theme(plot.margin = unit(c(0.1,0.1,0.1,.3), "cm"))
+fig2 = grid.arrange(grobs = lapply(list(fig2a,fig2b,fig2c,fig2d), "+", margin), layout_matrix = lay)
+ggsave(fig2, filename = "main_plots_rs/Fig2_9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+
+rm(lay, margin)
+```
+
+
+#Fig3
+##A Similarity and TCEM frequency
+Dataset 1 és 2
+
+```{r}
+load("objects/ligands_nonhuman_d1d2")
+ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), include.lowest = T, right = F)
+wilcox.test(bl62score ~ freqpenta_tcem_group, ligands_nonhuman)$p.value
+table(ligands_nonhuman$freqpenta_tcem_group)
+
+fig3a = ggplot(ligands_nonhuman, aes(x = freqpenta_tcem_group, y = bl62score, color = freqpenta_tcem_group, fill = freqpenta_tcem_group)) + 
+  geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
+  scale_x_discrete(labels = c("0 - 3", "4-")) +
+  coord_cartesian(ylim = c(.5,1)) +
+  scale_color_manual(values = c("#3C5488B2","#DC0000B2")) +
+  scale_fill_manual(values = alpha(c("#3C5488B2","#DC0000B2"), .3)) +
+  annotate(geom = "text", x = 1.5, y = 1, color = "black", size = 2, label = "paste(italic(P), \" = 3 x \", 10 ^ -48)", parse = TRUE) +
+  labs(tag = "A", x = "TCEM frequency", y = "Sequence similarity") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig3a
+rm(ligands_nonhuman)
+```
+
+##B Similarity - D1,D2
+
+```{r}
+load("objects/ligands_nonhuman_d1d2")
+#hist(ligands_nonhuman$bl62score)
+ligands_nonhuman$bl62score_group = cut(ligands_nonhuman$bl62score, 25)
+table(ligands_nonhuman$bl62score_group)
+
+groups = aggregate(ligands_nonhuman$trig ~ ligands_nonhuman$bl62score_group, FUN = function(x)  {
+  temp = table(factor(x, levels = c("1", "0")))
+  temp["1"]/temp["0"]
+  })
+colnames(groups) = c("group_int", "immunogenicity")
+groups$group_int = as.character(groups$group_int)
+groups$group_mean = sapply(groups$group_int, function(x) {
+  mean(c(as.numeric(gsub("\\(", "", strsplit(as.character(x), ",")[[1]][1])), as.numeric(gsub("\\]", "", strsplit(as.character(x), ",")[[1]][2]))))
+})
+colorbg = data.frame(startlocx = c(.59, .72), 
+                        endlocx = c(.72, .89),
+                       col = c("#3C5488B2","#DC0000B2"))
+
+fig3b = ggplot() + 
+  geom_point(data = groups, mapping = aes(group_mean, immunogenicity), size = 1) +
+  geom_smooth(mapping = aes(group_mean, immunogenicity), data = groups, se = F, linetype = "dashed", col = "black", size = 0.5, span = 0.4) +
+  geom_rect(data = colorbg, mapping = aes(xmin = startlocx, xmax = endlocx, ymin=0, ymax=2), fill = colorbg$col, alpha = 0.3) +
+  geom_vline(xintercept = groups$group_mean[which.max(groups$immunogenicity)], linetype = "dashed", color = "black") +
+  labs(tag = "B", x = "Mean of sequence similarity values in the group", y = "Ratio of immunogenic and non-immunogenic peptides") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig3b
+
+groups$group_mean[which.max(groups$immunogenicity)]
+cor.test(groups$group_mean[1:which.max(groups$immunogenicity)], groups$immunogenicity[1:which.max(groups$immunogenicity)], method = "spearman")
+cor.test(groups$group_mean[which.max(groups$immunogenicity):nrow(groups)], groups$immunogenicity[which.max(groups$immunogenicity):nrow(groups)], method = "spearman")
+
+rm(groups, ligands_nonhuman, colorbg)
+```
+
+##C COVID
+
+```{r}
+load("../objects/sars_cov_simil_to_balazs")
+sars_simil = data.frame(to_balazs, stringsAsFactors = F)
+rm(to_balazs)
+sars_simil$max_similarity_group = cut(sars_simil$max_similarity, breaks = c(min(sars_simil$max_similarity),median(sars_simil$max_similarity),max(sars_simil$max_similarity)), include.lowest = T)
+wilcox.test(number_of_indiv ~ max_similarity_group, sars_simil)
+table(sars_simil$max_similarity_group)
+
+fig3c = ggplot(sars_simil, aes(x = max_similarity_group, y = number_of_indiv, color = max_similarity_group, fill = max_similarity_group)) + 
+  geom_boxplot(lwd = .5, width = .6) +
+  scale_x_discrete(labels = c("0.59 - 0.72","0.72 - 0.89")) +
+  coord_cartesian(ylim = c(0,30)) +
+  scale_color_manual(values = c("#3C5488B2","#DC0000B2")) +
+  scale_fill_manual(values = alpha(c("#3C5488B2","#DC0000B2"), .3)) +
+  annotate(geom = "text", x = 1.5, y = 30, color = "black", size = 2, label = "paste(italic(P), \" = 0.015\")", parse = TRUE) +
+  labs(tag = "C", x = "Sequence similarity", y = "Number of individuals with specific T cells") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig3c
+rm(sars_simil)
+```
+
+##COMBINE
+
+```{r}
+lay = rbind(c(1,1,2,2,2,2,3,3),c(1,1,2,2,2,2,3,3))
+margin = theme(plot.margin = unit(c(.1,.1,.1,.3), "cm"))
+fig3 = grid.arrange(grobs = lapply(list(fig3a, fig3b, fig3c), "+", margin), layout_matrix = lay)
+ggsave(fig3, filename = "main_plots_rs/Fig3_5.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+rm(lay, margin)
+```
+
+#Fig4 CROSSREACT
+##B
+
+```{r}
+aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AABLOSUM62)) {
+  sum(mtx[cbind(fmatch(unlist(strsplit(seq_1, "")), aas), fmatch(unlist(strsplit(seq_2, "")), aas))])
+}
+
+tbl = read.delim("../crossreact/FIMMUN.txt", stringsAsFactors = F)
+tbl = tbl[tbl$id != "background",]
+tbl$median = apply(tbl[,4:6], 1, FUN = function(x) median(x, na.rm = T))
+tbl$TCEM = substr(tbl$peptide, 4, 8)
+selfdist = aLign(tbl$TCEM[1], tbl$TCEM[1])
+tbl$dist = sapply(tbl$TCEM, FUN = function(x) {
+  aLign(x, tbl$TCEM[1])/sqrt(selfdist*aLign(x,x))
+})
+
+fig4b = ggplot(tbl, aes(dist, median)) +
+  geom_point(size = .5) +
+  geom_smooth(se = F, color = "red", size = .7) +
+  geom_hline(yintercept = 10, color = "black", linetype = "dashed") +
+  geom_vline(xintercept = 0.61, color = "black", linetype = "dashed") +
+  annotate(geom = "text", x = .75, y = 90, color = "black", size = 3, label = "paste(italic(rho), \" = 0.77, \", italic(P), \" = 7 x \", 10 ^ -28)", parse = TRUE) +
+  labs(tag = "B", x = "BLOSUM62 similarity between \n the original and the modified sequence", y = "Relative TCR binding strength") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 10),
+    axis.title.y = element_text(size = 10),
+    axis.text.x = element_text(size = 8, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 12, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    plot.margin = unit(c(.1,.1,.1,.1), "cm"))
+fig4b
+rm(selfdist, aLign)
+```
+
+##C
+
+```{r}
+pred = prediction(predictions = tbl$dist, labels = tbl$median > 0.1)
+perf = performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf)
+auc = performance(pred, measure = "auc")
+text(0.9,0.2, paste0("AUC = ", round(unlist(auc@y.values), 2)))
+tbl$status = as.character(tbl$median > 0.1)
+optimal.cutpoints(X = "dist", status = "status", tag.healthy = "FALSE", methods = "CB", data = tbl[38:135,])
+
+df = data.frame(fpr = unlist(perf@x.values,use.names = F), tpr = unlist(perf@y.values, use.names = F))
+
+fig4c = ggplot(df, aes(fpr,tpr)) + 
+  geom_line() +
+  geom_abline(slope = 1, linetype = "dashed") +
+  annotate(geom = "text", x = .9, y = .2, label = paste0("AUC = ", round(unlist(auc@y.values), 2)), color = "black", size = 3) +
+  labs(tag = "C", x = "False positive rate", y = "True positive rate") +  
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 10),
+    axis.title.y = element_text(size = 10),
+    axis.text.x = element_text(size = 8, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 12, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    plot.margin = unit(c(.1,.1,.1,.1), "cm"))
+fig4c
+rm(auc,df,perf,pred,tbl)
+```
+
+##D
+
+```{r}
+load("crossreact/simmatrix_nimtcems43")
+simmatrix_values = data.frame(value = as.numeric(simmatrix))
+
+fig4d = ggplot(simmatrix_values, aes(x = value)) + 
+  geom_density(adjust = 4, size = .7, color = "#00A087B2") + 
+  geom_histogram(aes(y = stat(density)), fill = alpha("#00A087B2", .3), bins = 25, color = "#00A087B2", size = .5) +
+  geom_vline(xintercept = 0.61, linetype = "dashed") +
+  labs(tag = "D", x = "Sequence similarity to immunogenic TCEMs", y = "Density") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 10),
+    axis.title.y = element_text(size = 10, vjust = 3),
+    axis.text.x = element_text(size = 8, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 12, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    plot.margin = unit(c(.1,.1,.1,.18), "cm"))
+fig4d
+
+highsimperc = sapply(colnames(simmatrix), function(x) {
+  100*(sum(simmatrix[,x]>0.61)/nrow(simmatrix))
+})
+summary(highsimperc)
+rm(simmatrix, simmatrix_values, highsimperc)
+```
+
+##Combine
+
+```{r}
+#library(multipanelfigure)
+fig4a = readPNG("main_plots_rs/Cross_reactivity_final.png")
+fig4a = rasterGrob(fig4a)
+
+fig4 = grid.arrange(fig4a, fig4b, fig4c, fig4d, nrow = 2, ncol = 2)
+ggsave(fig4, filename = "main_plots_rs/Fig4_20.pdf", width = 18, height = 18, units = "cm", dpi = "retina")
+```
+
+#Fig5 - OK
+##Objects
+
+```{r}
+#"UP000464024" = "sarsvov2"
+species = list.files("../objects/uniprot_proteomes_hla_binding/eps/")
+load("../objects/pentamerfreq_tcem")
+load("../objects/score_list_tpr_normalized_with_division_median_two_sides")
+load("../objects/expr_list_tcem")
+exprmedians = sapply(expr_list, FUN = function(x) median(x))
+thymomedians = sapply(score_list, FUN = function(x) median(x))
+
+exprcutoff = 0.203075
+thymocutoff = 0.914470
+
+fract = t(sapply(species, FUN = function(x) {
+  load(paste0("../objects/uniprot_proteomes_hla_binding/eps/", x))
+  tcems = substr(eps, 4, 8)
+  tcemfreq = pentamerfreq_tcem[fmatch(tcems, names(pentamerfreq_tcem))]
+  tcemexpr = exprmedians[fmatch(tcems, names(exprmedians))]
+  tcemthymo = thymomedians[fmatch(tcems, names(thymomedians))]
+  rare = tcemfreq < 4
+  lowexpr = tcemexpr < exprcutoff
+  lowexpr[is.na(lowexpr)] = F
+  lowthymo = tcemthymo < thymocutoff
+  lowthymo[is.na(lowthymo)] = F
+  isna = !is.na(rare)
+  c("No positive selection", mean((rare | lowexpr | lowthymo) & isna))
+}))
+rm(expr_list, score_list, pentamerfreq_tcem, exprmedians, thymomedians, exprcutoff, thymocutoff, species)
+
+fract %<>% 
+  as.data.frame(stringsAsFactors = F) %>% 
+  tibble::rownames_to_column(var = "uniprot_id") %>% 
+  dplyr::rename(ratio = V2) %>% 
+  transform(ratio = as.numeric(ratio))
+
+#Add species name to fract
+load("../articleplots_objects/results_for_heatmaps")
+alleles = sort(unique(res$alleles))
+load("../articleplots_objects/results_for_heatmaps_medians_locspec_sarsexpr_033_sarsthymo_025_previous_corrected.jpg")
+res %<>% 
+  dplyr::rename(species_full_name = species_name, uniprot_id = species) %>% 
+  transform(uniprot_id = ifelse(uniprot_id == "sarscov2", "UP000464024", uniprot_id)) %>% 
+  filter(alleles %in% alleles) %>% 
+  filter(species_full_name != "Human papillomavirus type 21") %>% 
+  mutate(species = case_when(
+    .$species_full_name == "Dengue virus type 1" ~ "Dengue virus",
+    .$species_full_name == "Epstein-Barr virus (HHV-4 strain B95-8)" ~ "Epstein-Barr virus",
+    .$species_full_name == "Hepatitis C virus genotype 1a" ~ "Hepatitis C virus",
+    .$species_full_name == "Hepatitis E virus genotype 1" ~ "Hepatitis E virus",
+    .$species_full_name == "Human adenovirus C serotype 2" ~ "Human adenovirus C",
+    .$species_full_name == "Human hepatitis A virus genotype IB" ~ "Human hepatitis A virus",
+    .$species_full_name == "Human papillomavirus type 16" ~ "Human papillomavirus",
+    .$species_full_name == "Human parvovirus B19" ~ "Human parvovirus",
+    .$species_full_name == "Human rhinovirus A serotype 89" ~ "Human rhinovirus A",
+    .$species_full_name == "Molluscum contagiosum virus subtype 1" ~ "Molluscum contagiosum virus",
+    .$species_full_name == "Poliovirus type 1" ~ "Poliovirus",
+    TRUE ~ species_full_name))
+
+fract$species = res$species[fmatch(fract$uniprot_id,res$uniprot_id)]
+
+fract$lengthofprot = sapply(fract$uniprot_id, function(x) {
+  load(paste0("../objects/uniprot_proteomes_hla_binding/eps/", x))
+  length(eps)
+})
+fract %<>% 
+  arrange(lengthofprot) %>% 
+  transform(species = as.factor(species)) %>% 
+  mutate(species = fct_reorder(species, lengthofprot))
+fract$variance = sapply(fract$uniprot_id, function(x) var(res$aff_strong_rp_strong[res$uniprot_id == x], na.rm = T))
+
+res$species = factor(res$species, levels = levels(fract$species))
+species = levels(res$species)
+
+heatmapmtx = matrix(NA, nrow = length(alleles), ncol = length(species), dimnames = list(alleles, species))
+for(i in 1:length(alleles)) for(j in 1:length(species)) {
+  heatmapmtx[i,j] = res$aff_strong_rp_strong[res$alleles == alleles[i] & res$species == species[j]]
+}
+rm(i,j,alleles,species)
+min(heatmapmtx)
+max(heatmapmtx, na.rm = T)
+
+save(fract, file = "../articleplots_objects/pathogen_fract")
+save(heatmapmtx,file = "../articleplots_objects/pathogen_heatmapmtx")
+save(res, file = "../articleplots_objects/pathogen_res")
+```
+
+
+##A Barchart
+
+```{r}
+load("../articleplots_objects/pathogen_fract")
+fract %<>% mutate(ratio_conv = ratio - 0.5)
+
+#PLOT
+fig5a = ggplot(fract, aes(x = species, y = ratio_conv)) + 
+  geom_bar(aes(fill = ratio), position="stack", stat = "identity") + 
+  coord_cartesian(ylim = c(0,0.22)) +
+  #scale_x_discrete(labels = as.character(fract$species), breaks = seq(.5,49.5,1)) +
+  scale_y_continuous(breaks = c(0,0.1,0.2), labels = c(0.5,0.6,0.7)) +
+  scale_fill_gradientn(colours = colorRampPalette(c("#91D1C2B2","#3C5488B2"))(51)) +
+  labs(y = "Fraction of np-TCEMs") +
+  theme_bw() + 
+  theme(legend.position = "none",
+        axis.title.x = element_blank(), 
+        axis.title.y = element_text(size = 7, vjust = 2),
+        axis.text.x = element_text(size = 6, angle = 90, vjust = 0.4),
+        axis.text.y = element_text(size = 6, color = "black"),
+        plot.tag = element_text(size = 9, color = "black"),
+        #axis.line.x = element_line(colour = "black"),
+        axis.line.y = element_line(colour = "black"),
+        axis.ticks = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.margin = unit(c(.1,.2,.1,.28), "cm"))
+fig5a
+rm(fract)
+```
+
+##B Heatmap
+
+```{r}
+load("../articleplots_objects/pathogen_heatmapmtx")
+fig5b_ch = Heatmap(matrix = heatmapmtx,
+                   col = colorRampPalette(c("#3C5488B2", "white", "#DC0000B2"))(10),
+                   rect_gp = gpar(col = "grey60", lwd = .5),
+                   cluster_columns = F, 
+                   cluster_rows = F,
+                   row_names_side = "left",
+                   show_column_names = F,
+                   row_names_gp = gpar(col = "black", fontsize = 5),
+                   heatmap_legend_param = list(title = "Fraction of np-TCEMs in presented peptides",
+                                               title_position = "topcenter",
+                                               direction = "horizontal",
+                                               title_gp = gpar(col = "black", fontsize = 7, fontface = "bold"),
+                                               at = c(0, 0.2, 0.4, 0.6,0.8,1),
+                                               legend_height = unit(4, "cm"),
+                                               grid_width = unit(0.2, "cm"), 
+                                               labels_gp = gpar(fontsize = 7)))
+fig5b = grid.grabExpr(draw(fig5b_ch, heatmap_legend_side = "bottom", padding = unit(c(0, .38, 0, .22), "cm")))
+rm(heatmapmtx, fig5b_ch)
+```
+
+##C Dotplot
+
+```{r}
+load("../articleplots_objects/pathogen_fract")
+
+fig5c = ggplot(fract, aes(x = species, y = variance)) + 
+  geom_point(size = 1.5) +
+  labs(y = "Variance") +
+  geom_vline(xintercept = seq(1.5,49.5,1), color = "#e0e0e0") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 7),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(size = 6, color = "black"),
+    axis.ticks.x = element_blank(),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+fig5c
+
+# a = cor.test(fract$variance, fract$lengthofprot, method = "spearman", exact = F)
+# a$p.value
+rm(fract)
+```
+
+##D Protective and susceptible alleles
+
+```{r}
+load("../articleplots_objects/groups_sars_extended_expr_33_thymo_25.jpg")
+dfps = as.data.frame(groups, stringsAsFactors = F)
+colnames(dfps) = c("Pathogen", "allele", "association", "value")
+dfps$value = as.numeric(dfps$value)
+
+fig5d = ggplot(dfps, aes(x = value, y = association, color = Pathogen, label = allele)) + 
+  geom_point(aes(shape = Pathogen), size = 1) +
+  scale_y_discrete(labels = c("Prot.", "Risk")) +
+  geom_hline(yintercept = 1.5, linetype = "dashed") +
+  #geom_text_repel(show.legend = F, ) +
+  geom_text_repel(aes(label = allele), size = 2.5, segment.size = .5, nudge_y = 0.2, show.legend = F, min.segment.length = unit(1,"cm")) +
+  scale_color_manual(values = c("#3C5488B2","#7E6148B2","#00A087B2","#DC0000B2")) +
+  labs(x = "Fraction of np-TCEMs in presented peptides") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_blank(),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    legend.title = element_text(size = 7, color = "black"),
+    legend.text = element_text(size = 6, color = "black"),
+    legend.key.size = unit(.3, "cm"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    plot.margin = unit(c(.1,.15,.1,.38), "cm"),
+    legend.position = "right", 
+    legend.direction = "vertical")
+fig5d
+
+rm(groups,dfps)
+```
+
+
+##Combine
+
+```{r}
+lay = cbind(c(rep(1,5),rep(2,7),rep(3,2),rep(4,2)),
+            c(rep(1,5),rep(2,7),rep(3,2),rep(4,2)),
+            c(rep(1,5),rep(2,7),rep(3,2),rep(4,2)),
+            c(rep(1,5),rep(2,7),rep(3,2),rep(4,2)))
+fig5 = grid.arrange(grobs = list(fig5a,fig5b,fig5c,fig5d), layout_matrix = lay)
+ggsave(fig5, filename = "main_plots_rs/Fig5_50.pdf", width = 18, height = 22, units = "cm", dpi = "retina")
+```
+
+#FigS2
+##DIVERSITY, BLOSUM distance density
+Sequences of T cell activating and non-activating epitopes have similar diversity and amino acid constitution.
+
+```{r}
+library(Biostrings)
+library(foreach)
+library(doParallel)
+load("objects/ligands_nonhuman_d2")
+
+#Not trigger
+pss_nt = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$trig == 0]), cores = 6, submat = "BLOSUM62")
+#save(pss_nt_d2, file = "objects/pss_nt_figs2")
+pss_nt_values = pss_nt[upper.tri(pss_nt)]
+l1 = length(pss_nt_values)
+
+#Trigger
+pss_t = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$trig == 1]), cores = 6, submat = "BLOSUM62")
+#save(pss_t_d2, file = "objects/pss_t_d2")
+pss_t_values = pss_t[upper.tri(pss_t)]
+l2 = length(pss_t_values)
+
+pss = data.frame(nt = c(pss_nt_values, rep(NA, l2-l1)), t = pss_t_values)
+save(pss, file = "objects/pss_figs2")
+rm(ligands_nonhuman, pss_nt, pss_t, l1, l2, pss_nt_values, pss_t_values)
+
+load("objects/pss_figs2")
+Sys.time()
+figS2a <- ggplot(pss, aes(x=x)) +
+  # Top
+  geom_density(aes(x = t, y = ..density..), fill = "#DC0000B2") +
+  geom_label(aes(x = 0.45, y = 4, label = "Immunogenic"), color = "#DC0000B2", size = 4) +
+  # Bottom
+  geom_density(aes(x = nt, y = -..density..), fill = "#3C5488B2") +
+  geom_label(aes(x = 0.45, y = -4, label = "Non-immunogenic"), color = "#3C5488B2", size = 4) +
+  scale_y_continuous(breaks = c(-4,0,4), labels = c(4,0,4)) +
+  labs(tag = "A", x = "BLOSUM62 similarity between peptides", y = "Density") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 10),
+    axis.title.y = element_text(size = 10),
+    axis.text = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 10, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS2a
+save(figS2a, file = "supp_plots_rs/figS2a_02")
+Sys.time()
+rm(pss)
+```
+
+##MCA plot
+
+```{r}
+library(factoextra)
+library(FactoMineR)
+load("objects/ligands_nonhuman_d2")
+ligands_nonhuman_ds_2 = ligands_nonhuman[nchar(ligands_nonhuman$epitope) == 9,]
+rm(ligands_nonhuman)
+dropped_ep = readLines("01out/dropped_eps_clo_d2.txt")
+load("objects/all_iedb")
+
+length(unique(c(ligands_nonhuman_ds_2$epitope, dropped_ep[nchar(dropped_ep) == 9])))
+length(ligands_nonhuman_ds_2$epitope)
+
+#PEPTIDE
+categmtx_iedb_full = matrix(unlist(strsplit(all_iedb, "")), ncol = 9, byrow = T)
+categmtx_iedb_full = as.data.frame(categmtx_iedb_full)
+res_mca_full = MCA(categmtx_iedb_full ,graph = F)
+rm(categmtx_iedb_full)
+df_iedb_full = as.data.frame(res_mca_full$ind$coord)
+rm(res_mca_full)
+colnames(df_iedb_full) = c("Dim1", "Dim2", "Dim3", "Dim4", "Dim5")
+
+df_full = rbind.data.frame(cbind.data.frame(df_iedb_full[!is.na(fmatch(all_iedb, c(ligands_nonhuman_ds_2$epitope, dropped_ep))),], group = "Full peptide - Before filtering"),cbind.data.frame(df_iedb_full[!is.na(fmatch(all_iedb, ligands_nonhuman_ds_2$epitope)),], group = "Full peptide - After filtering"))
+rm(df_iedb_full)
+df_full$group = factor(df_full$group, levels = c("Full peptide - Before filtering", "Full peptide - After filtering"))
+table(df_full$group)
+
+#PLots
+figS2b = ggplot(df_full, aes(x = Dim1, y = Dim2)) + 
+  stat_binhex(aes(fill=..count..), bins = 20) + 
+  scale_fill_gradientn(colours = colorRampPalette(c("white", "#990000"))(9)) + 
+  facet_wrap(~group) + 
+  scale_x_continuous(breaks = c(-1,0,1), labels = c(-1,0,1)) +
+  scale_y_continuous(breaks = c(-1,0,1), labels = c(-1,0,1)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  labs(tag = "B", x = "Dim 1", y = "Dim 2") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 10, vjust = 0),
+    axis.title.y = element_text(size = 10, vjust = 1),
+    axis.text.x = element_text(size = 8, vjust = 0, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    legend.title = element_text(size = 9, color = "black"),
+    legend.text = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 10, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    strip.background = element_blank(),
+    strip.placement = "outside",
+    strip.text = element_text(size = 7, color = "black"),
+    legend.key.width = unit(.2,"cm"), 
+    legend.key.height = unit(.3,"cm"))
+figS2b
+
+#TCEM
+categmtx_iedb_tcem = matrix(unlist(strsplit(substr(all_iedb, 4, 8), "")), ncol = 5, byrow = T)
+categmtx_iedb_tcem = as.data.frame(categmtx_iedb_tcem)
+res_mca_tcem = MCA(categmtx_iedb_tcem ,graph = F)
+rm(categmtx_iedb_tcem)
+df_iedb_tcem = as.data.frame(res_mca_tcem$ind$coord)
+rm(res_mca_tcem)
+colnames(df_iedb_tcem) = c("Dim1", "Dim2", "Dim3", "Dim4", "Dim5")
+
+df_tcem = rbind.data.frame(cbind.data.frame(df_iedb_tcem[!is.na(fmatch(all_iedb, c(ligands_nonhuman_ds_2$epitope, dropped_ep))),], group = "TCEM - Before filtering"), cbind.data.frame(df_iedb_tcem[!is.na(fmatch(all_iedb, ligands_nonhuman_ds_2$epitope)),], group = "TCEM - After filtering"))
+rm(df_iedb_tcem, all_iedb, ligands_nonhuman_ds_2, dropped_ep)
+df_tcem$group = factor(df_tcem$group, levels = c("TCEM - Before filtering", "TCEM - After filtering"))
+
+figS2c = ggplot(df_tcem, aes(x = Dim1, y = Dim2)) + 
+  stat_binhex(aes(fill=..count..), bins = 20) + 
+  scale_fill_gradientn(colours = colorRampPalette(c("white", "#990000"))(9)) + 
+  facet_wrap(~group) + 
+  scale_x_continuous(breaks = c(-1,0,1), labels = c(-1,0,1)) +
+  scale_y_continuous(breaks = c(-1,0,1), labels = c(-1,0,1)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  labs(tag = "C", x = "Dim 1", y = "Dim 2") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 10, vjust = 0),
+    axis.title.y = element_text(size = 10, vjust = 1),
+    axis.text.x = element_text(size = 8, vjust = 0, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    legend.title = element_text(size = 9, color = "black"),
+    legend.text = element_text(size = 8, color = "black"),
+    title = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 10, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    strip.background = element_blank(),
+    strip.placement = "outside",
+    strip.text = element_text(size = 7, color = "black"),
+    legend.key.width = unit(.2,"cm"), 
+    legend.key.height = unit(.3,"cm"))
+figS2c
+
+save(figS2b, figS2c, file = "supp_plots_rs/figS2bc")
+rm(df_full, df_tcem)
+```
+
+##Combine
+
+```{r}
+load("supp_plots_rs/figS2a_02")
+load("supp_plots_rs/figS2bc")
+lay = rbind(c(1,1,2,2),c(1,1,3,3))
+margin1 = theme(plot.margin = unit(c(.1,.1,.1,.1), "cm"))
+Sys.time()
+figS2 = grid.arrange(grobs = lapply(list(figS2a, figS2b, figS2c), "+", margin1), layout_matrix = lay)
+ggsave(figS2, filename = "supp_plots_rs/FigS2_17.png", width = 22, height = 13, units = "cm", dpi = "retina")
+Sys.time()
+rm(lay, margin1)
+```
+
+#FigS3 - TCEMDISTRIB
+frequency distribution in the human proteome
+##Object
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+tcems_d1 = ligands_nonhuman %>%
+  select(tcem, freqpenta_tcem) %>%
+  arrange(freqpenta_tcem) %>%
+  unique() %>%
+  mutate(tcemsource = "Dataset 1")
+
+load("objects/ligands_nonhuman_d2")
+tcems_d2 = ligands_nonhuman %>%
+  select(tcem, freqpenta_tcem) %>%
+  arrange(freqpenta_tcem) %>%
+  unique() %>%
+  mutate(tcemsource = "Dataset 2")
+
+load("../objects/pentamerfreq_tcem")
+tcems_all = data.frame(tcem = names(pentamerfreq_tcem), 
+                       freqpenta_tcem = unname(pentamerfreq_tcem), 
+                       tcemsource = "All possible TCEMs")
+
+tcems = tcems_d1 %>%
+  union(tcems_d2) %>%
+  union(tcems_all)
+tcems$tcemsource = factor(tcems$tcemsource, levels = c("Dataset 1","Dataset 2","All possible TCEMs"))
+save(tcems, file = "objects/tcems")
+rm(ligands_nonhuman, tcems_d1, tcems_d2, tcems_all, pentamerfreq_tcem)
+```
+
+##Plot
+
+```{r}
+load("objects/tcems")
+table(tcems$tcemsource)
+
+summary(tcems$freqpenta_tcem[tcems$tcemsource == "Dataset 1"])
+table(tcems$freqpenta_tcem[tcems$tcemsource == "Dataset 1"])
+summary(tcems$freqpenta_tcem[tcems$tcemsource == "Dataset 2"])
+table(tcems$freqpenta_tcem[tcems$tcemsource == "Dataset 2"])
+summary(tcems$freqpenta_tcem[tcems$tcemsource == "All possible TCEMs"])
+table(tcems$freqpenta_tcem[tcems$tcemsource == "All possible TCEMs"])
+
+tcems_f = tcems[tcems$freqpenta_tcem<=50,]
+table(tcems_f$tcemsource)
+
+ggplot(tcems_f, aes(x = freqpenta_tcem, color = tcemsource, fill = tcemsource)) +
+  geom_histogram(bins = 50) +
+  facet_grid(rows = vars(tcemsource), scales = "free") +
+  scale_x_continuous(breaks = c(seq(0,10,2),seq(25,50,25))) +
+  scale_fill_manual(values = alpha(c("#3C5488B2","#E64B35B2","#00A087B2"),.3)) +
+  scale_color_manual(values = c("#3C5488B2","#E64B35B2","#00A087B2")) +
+  labs(x = "TCEM frequency in the human proteome", y = "Frequency") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 10, vjust = 0),
+    axis.title.y = element_text(size = 10, vjust = 0),
+    axis.text.x = element_text(size = 9, vjust = 0, color = "black"),
+    axis.text.y = element_text(size = 9, color = "black"),
+    strip.text.y = element_text(size = 10, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    strip.background = element_blank(),
+    strip.placement = "outside")
+ggsave("supp_plots_rs/FigS3_5.jpg", width = 14, height = 14, units = "cm", dpi = "retina")
+
+rm(tcems)
+```
+
+#FigS4 - MS ROC
+
+```{r}
+load("20out/ms_data_corrected2")
+load("../objects/pentamerfreq_tcem")
+seqs_tcem = unique(ms_data$tcem[nchar(ms_data$Sequence) %in% c(9,10)]) #153,456
+pentamerfreq_tcem_roc = data.frame(tcem = names(pentamerfreq_tcem), freq = unname(pentamerfreq_tcem), group = 0)
+pentamerfreq_tcem_roc$group[pentamerfreq_tcem_roc$tcem %in% seqs_tcem] = 1
+table(pentamerfreq_tcem_roc$group) #153,456 vs. 3,046,544
+
+wilcox.test(freq~group, pentamerfreq_tcem_roc)$p.value
+#BOXPLOT
+figs_ms_1 = ggplot(pentamerfreq_tcem_roc, aes(factor(group), freq, color = factor(group), fill = factor(group))) +
+  geom_boxplot(lwd = .5, width = .6) +
+  scale_y_continuous(trans = "pseudo_log", breaks = c(0,2,4,7,10,100,1000)) +
+  #coord_cartesian(ylim = c(0,100)) +
+  scale_x_discrete(labels = c("-","+")) +
+  scale_color_manual(values = c("#3C5488B2", "#DC0000B2")) +
+  scale_fill_manual(values = alpha(c("#3C5488B2", "#DC0000B2"), .3)) +
+  geom_hline(yintercept = 4, linetype = "dashed", color = "black", size = .5) +
+  annotate(geom = "text", x = 1.5, y = 4000, color = "black", size = 3, label = "paste(italic(P), \" < 2.2 x \", 10 ^ -16)", parse = TRUE) +
+  labs(tag = "A", x = "Found in immunopeptidomics studies", y = "TCEM frequency") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x = element_text(size = 10, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 10, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figs_ms_1
+#rm(ms_data, pentamerfreq_tcem, seqs_tcem)
+
+#ROC
+pred = prediction(predictions = pentamerfreq_tcem_roc$freq, pentamerfreq_tcem_roc$group)
+perf = performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf)
+auc = performance(pred, measure = "auc")
+text(0.9,0.2, paste0("AUC = ", round(unlist(auc@y.values), 2)))
+
+opt.cut = function(perf, pred){
+  cut.ind = mapply(FUN=function(x, y, p){
+    d = (x - 0)^2 + (y-1)^2
+    ind = which(d == min(d))
+    c(sensitivity = y[[ind]], specificity = 1-x[[ind]],
+      cutoff = p[[ind]])
+  }, perf@x.values, perf@y.values, pred@cutoffs)
+}
+print(opt.cut(perf, pred))
+
+df = data.frame(fpr = unlist(perf@x.values,use.names = F), tpr = unlist(perf@y.values, use.names = F))
+
+figs_ms_2 = ggplot(df, aes(fpr,tpr)) + 
+  geom_line() +
+  geom_abline(slope = 1, linetype = "dashed") +
+  annotate(geom = "text", x = .9, y = .2, label = paste0("AUC = ", round(unlist(auc@y.values), 2)), color = "black", size = 4) +
+  labs(tag = "B", x = "False positive rate", y = "True positive rate") +  
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x = element_text(size = 8, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 10, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figs_ms_2
+
+lay = cbind(c(1,1),c(2,2),c(2,2))
+margin1 = theme(plot.margin = unit(c(.2,.4,.2,.2), "cm"))
+margin2 = theme(plot.margin = unit(c(.2,.2,.27,.8), "cm"))
+figs4_ms = grid.arrange(grobs = c(lapply(list(figs_ms_1), "+", margin1), 
+                              lapply(list(figs_ms_2), "+", margin2)), layout_matrix = lay)
+ggsave(figs4_ms, filename = "supp_plots_rs/figS4_ms_13.png", width = 20, height = 13, units = "cm", dpi = "retina")
+```
+
+#FigS5 - Housekeeping ratio
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+nb_of_groups = 20
+
+ligands_nonhuman$pentamer_expression_group = cut(ligands_nonhuman$pentamer_expression, unique(quantile(ligands_nonhuman$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
+table(ligands_nonhuman$pentamer_expression_group)
+
+tempdf = data.frame(group = 1:nb_of_groups, hkratio = NA, stringsAsFactors = F)
+tempdf$hkratio = sapply(tempdf$group, function(x) mean(ligands_nonhuman$housekeeping_ratio[ligands_nonhuman$pentamer_expression_group == x], na.rm = T))
+rcorr(x = tempdf$group, y = tempdf$hkratio, type = "spearman")$P[1,2]
+rcorr(x = tempdf$group, y = tempdf$hkratio, type = "spearman")$r[1,2]
+
+figS5a = ggplot(tempdf, aes(x = group, y = hkratio)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "gam", se = F, linetype = "dashed", col = "black", size = 0.5) +
+  annotate(geom = "text", x = 7, y = 0.25, color = "black", size = 4, label = "paste(italic(rho), \" = 0.98, \", italic(P), \" = 4 x \", 10 ^ -14)", parse = TRUE) +
+  labs(x = expression(Peptide~groups~defined~by~every~5^{"th"}~percentile~of~TCEM~expression), y = "Mean fraction of housekeeping genes") +
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3), limits = c(0,0.4)) +
+  annotate(geom = "text", x = 10, y = 0.4, label = "Dataset 1", color = "black", size = 4) +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 9, hjust = 0),
+    axis.title.y = element_text(size = 9),
+    axis.text = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS5a
+rm(ligands_nonhuman, tempdf)
+
+#D2
+load("objects/ligands_nonhuman_d2")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman$pentamer_expression_group = cut(ligands_nonhuman$pentamer_expression, unique(quantile(ligands_nonhuman$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
+table(ligands_nonhuman$pentamer_expression_group)
+
+tempdf = data.frame(group = 1:nb_of_groups, hkratio = NA, stringsAsFactors = F)
+tempdf$hkratio = sapply(tempdf$group, function(x) mean(ligands_nonhuman$housekeeping_ratio[ligands_nonhuman$pentamer_expression_group == x], na.rm = T))
+rcorr(x = tempdf$group, y = tempdf$hkratio, type = "spearman")$P[1,2]
+rcorr(x = tempdf$group, y = tempdf$hkratio, type = "spearman")$r[1,2]
+
+figS5b = ggplot(tempdf, aes(x = group, y = hkratio)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "gam", se = F, linetype = "dashed", col = "black", size = 0.5) +
+  annotate(geom = "text", x = 7, y = 0.25, color = "black", size = 4, label = "paste(italic(rho), \" = 0.89, \", italic(P), \" = 2 x \", 10 ^ -7)", parse = TRUE) +
+  labs(x = expression(Peptide~groups~defined~by~every~5^{"th"}~percentile~of~TCEM~expression), y = "Mean fraction of housekeeping genes") +
+  scale_y_continuous(breaks = c(0,0.1,0.2,0.3), limits = c(0,0.4)) +
+  annotate(geom = "text", x = 10, y = 0.4, label = "Dataset 2", color = "black", size = 4) +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 9, hjust = 0),
+    axis.title.y = element_text(size = 9),
+    axis.text = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS5b
+rm(ligands_nonhuman, tempdf, nb_of_groups)
+
+##COMBINE
+figS5 = grid.arrange(grobs = list(figS5a, figS5b), ncol = 2)
+ggsave(figS5, filename = "supp_plots_rs/FigS5_12.jpg", width = 22, height = 11, units = "cm", dpi = "retina")
+```
+
+#FigS7 logreg, Table S1
+
+```{r}
+ds = "d1"
+ds = "d2"
+
+load(paste0("objects/ligands_nonhuman_", ds))
+ligands_nonhuman$trig = as.numeric(as.character(ligands_nonhuman$trig))
+ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$pentamer_expression_group)
+ligands_nonhuman %<>% 
+  mutate(pentamer_expression_group2 = case_when(
+    .$pentamer_expression_group == 1 ~ "edge",
+    .$pentamer_expression_group == 2 ~ "medium",
+    .$pentamer_expression_group == 3 ~ "edge")) %>% 
+  select(allele, epitope, trig, freqpenta_tcem, pentamer_expression_group2, thymopscore) %>% 
+  mutate(log_freqpenta_tcem = log(freqpenta_tcem)) %>% 
+  na.omit()
+
+modelglm = glm(formula = trig ~ log_freqpenta_tcem, family = "binomial", data = ligands_nonhuman)
+summary(modelglm)$coef["log_freqpenta_tcem", c("Estimate","Pr(>|z|)")]
+summary(modelglm)$aic
+save(modelglm, file = paste0("glm", ds, "/m1"))
+
+modelglm = glm(formula = trig ~ pentamer_expression_group2, family = "binomial", data = ligands_nonhuman)
+summary(modelglm)$coef["pentamer_expression_group2medium", c("Estimate","Pr(>|z|)")]
+summary(modelglm)$aic
+save(modelglm, file = paste0("glm", ds, "/m2"))
+
+modelglm = glm(formula = trig~thymopscore, family = "binomial", data = ligands_nonhuman)
+summary(modelglm)$coef["thymopscore", c("Estimate","Pr(>|z|)")]
+summary(modelglm)$aic
+save(modelglm, file = paste0("glm", ds, "/m3"))
+
+modelglm = glm(formula = trig~log_freqpenta_tcem + pentamer_expression_group2, family = "binomial", data = ligands_nonhuman)
+summary(modelglm)$coef[c("log_freqpenta_tcem","pentamer_expression_group2medium"), c("Estimate","Pr(>|z|)")]
+summary(modelglm)$aic
+save(modelglm, file = paste0("glm", ds, "/m4"))
+
+modelglm = glm(formula = trig~log_freqpenta_tcem + thymopscore, family = "binomial", data = ligands_nonhuman)
+summary(modelglm)$coef[c("log_freqpenta_tcem","thymopscore"), c("Estimate","Pr(>|z|)")]
+summary(modelglm)$aic
+save(modelglm, file = paste0("glm", ds, "/m5"))
+
+modelglm = glm(formula = trig~pentamer_expression_group2 + thymopscore, family = "binomial", data = ligands_nonhuman)
+summary(modelglm)$coef[c("pentamer_expression_group2medium","thymopscore"), c("Estimate","Pr(>|z|)")]
+summary(modelglm)$aic
+save(modelglm, file = paste0("glm", ds, "/m6"))
+
+modelglm = glm(formula = trig ~ log_freqpenta_tcem + pentamer_expression_group2 + thymopscore, family = "binomial", data = ligands_nonhuman)
+summary(modelglm)$coef[c("log_freqpenta_tcem","pentamer_expression_group2medium","thymopscore"), c("Estimate","Pr(>|z|)")]
+summary(modelglm)$aic
+save(modelglm, file = paste0("glm", ds, "/m7"))
+
+modelfiles = list.files(paste0("glm", ds, "/"))
+resanova = expand.grid(model1 = modelfiles, model2 = modelfiles, stringsAsFactors = F)
+resanova %<>% 
+  filter(model1 < model2) %>% 
+  mutate(model1resid = NA, model2resid = NA, pvalue = NA)
+
+for(i in 1:nrow(resanova)) {
+  load(paste0("glm", ds, "/", resanova$model1[i]))
+  modelglm1 = modelglm
+  load(paste0("glm", ds, "/", resanova$model2[i]))
+  tempanova = anova(modelglm1, modelglm, test = "Chisq")
+  resanova$model1resid[i] = tempanova$`Resid. Dev`[1]
+  resanova$model2resid[i] = tempanova$`Resid. Dev`[2]
+  resanova$pvalue[i] = tempanova$`Pr(>Chi)`[2]
+}
+rm(modelglm, modelglm1, tempanova, i)
+save(resanova, file = paste0("objects/resanova_", ds))
+load(paste0("objects/resanova_", ds))
+```
+
+#FigS8 Forest plot hydrophobicity
+
+```{r}
+mypal <- pal_npg("nrc", alpha = 0.7)(9)
+mypal
+
+#D1
+load("objects/ligands_nonhuman_d1")
+
+##Hydrophobicity index - Kyte & Doolittle
+ligands_nonhuman$trig = as.numeric(as.character(ligands_nonhuman$trig))
+load("../objects/hydroph_indices") #ebből egy vektor kell csak
+indices = indices[27,]
+ligands_nonhuman$hydrophobicity =  unname(sapply(ligands_nonhuman$tcem, function(y) {median(as.numeric(indices[,strsplit(y, "")[[1]]]))}))
+
+##Create expression group and drop NAs
+ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$pentamer_expression_group)
+ligands_nonhuman %<>% 
+  mutate(pentamer_expression_group2 = case_when(
+    .$pentamer_expression_group == 1 ~ "Low or High (ref.)",
+    .$pentamer_expression_group == 2 ~ "Medium",
+    .$pentamer_expression_group == 3 ~ "Low or High (ref.)")) %>% 
+  mutate(log_freqpenta_tcem = log(freqpenta_tcem)) %>%
+  filter(!is.na(thymopscore)) %>% 
+  mutate(thymo_zscore = (thymopscore - mean(thymopscore))/sd(thymopscore)) %>% 
+  dplyr::select(allele, epitope, trig, log_freqpenta_tcem, pentamer_expression_group2, thymo_zscore, hydrophobicity) %>% 
+  na.omit()
+#347 peptides removes from D1
+
+##Model
+colnames(ligands_nonhuman)[4:7] = c("TCEM frequency (log)", "TCEM expression group", "TCEM thymoproteasomal cleavage score (z-score)", "TCEM hydrophobicity")
+
+modelglm_d1 = glm(formula = trig ~ `TCEM frequency (log)` + `TCEM expression group` + `TCEM thymoproteasomal cleavage score (z-score)` + `TCEM hydrophobicity`, family = "binomial", data = ligands_nonhuman)
+summary(modelglm_d1)
+
+panels <- list(list(width = 0.03),
+               list(width = 1, display = ~variable, heading = "Variable"),
+               list(width = 1, display = ~level),
+               list(width = 0.03, item = "vline", hjust = 0.5),
+               list(width = 1, item = "forest", hjust = 0.5, heading = "OR (95% CI)", linetype = "dashed", line_x = 0),
+               list(width = 0.03, item = "vline", hjust = 0.5),
+               list(width = 0.05, display = ~ ifelse(reference, "", format.pval(p.value, digits = 3, eps = 0.001)),display_na = NA, hjust = 0.5, heading = "P"),
+               list(width = 0.03))
+fig_forest_d1 = forest_model(modelglm_d1, 
+             panels = panels,
+             format_options = list(colour = "#3C5488B2", shape = 15, text_size = 2, point_size = 3, banded = FALSE),
+             exponentiate = T) + 
+  theme(axis.text.x = element_text(size=5))
+fig_forest_d1
+
+#D2
+load("objects/ligands_nonhuman_d2")
+ligands_nonhuman$trig = as.numeric(as.character(ligands_nonhuman$trig))
+ligands_nonhuman$hydrophobicity =  unname(sapply(ligands_nonhuman$tcem, function(y) {median(as.numeric(indices[,strsplit(y, "")[[1]]]))}))
+ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$pentamer_expression_group)
+ligands_nonhuman %<>% 
+  mutate(pentamer_expression_group2 = case_when(
+    .$pentamer_expression_group == 1 ~ "Low or High (ref.)",
+    .$pentamer_expression_group == 2 ~ "Medium",
+    .$pentamer_expression_group == 3 ~ "Low or High (ref.)")) %>% 
+  mutate(log_freqpenta_tcem = log(freqpenta_tcem)) %>%
+  filter(!is.na(thymopscore)) %>% 
+  mutate(thymo_zscore = (thymopscore - mean(thymopscore))/sd(thymopscore)) %>% 
+  dplyr::select(allele, epitope, trig, log_freqpenta_tcem, pentamer_expression_group2, thymo_zscore, hydrophobicity) %>% 
+  na.omit()
+#62 peptides removes from D2
+
+##Model
+colnames(ligands_nonhuman)[4:7] = c("TCEM frequency (log)", "TCEM expression group", "TCEM thymoproteasomal cleavage score (z-score)", "TCEM hydrophobicity")
+
+modelglm_d2 = glm(formula = trig ~ `TCEM frequency (log)` + `TCEM expression group` + `TCEM thymoproteasomal cleavage score (z-score)` + `TCEM hydrophobicity`, family = "binomial", data = ligands_nonhuman)
+summary(modelglm_d2)
+
+fig_forest_d2 = forest_model(modelglm_d2, 
+             panels = panels,
+             format_options = list(colour = "#3C5488B2", shape = 15, text_size = 2, point_size = 3, banded = FALSE),
+             exponentiate = T) + 
+  theme(
+    axis.text.x = element_text(size=5))
+fig_forest_d2
+
+fig_forest= grid.arrange(textGrob("Dataset 1"), fig_forest_d1, textGrob("Dataset 2"), fig_forest_d2, layout_matrix = rbind(c(1,1,1,1),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(3,3,3,3),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4)))
+
+ggsave(fig_forest, filename = "supp_plots_rs/figS8_forestplot_13.png", width = 13, height = 8, units = "cm", dpi = "retina")
+```
+
+#FigS9 Secondary anchors
+##A TCEM frequency
+
+```{r}
+load("21out/ligands_nonhuman_d1d2_wosecanc")
+wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+
+table(ligands_nonhuman$group)
+
+figS9_1 = ggplot(ligands_nonhuman, aes(x = group, y = freqpenta_tcem, color = trig, fill = trig)) + 
+  geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
+  scale_x_discrete(labels = c("+","-","+","-")) +
+  coord_cartesian(ylim = c(0,170)) +
+  scale_y_continuous(trans = "pseudo_log", breaks = c(0,3,4,5,10,100)) +
+  scale_color_manual(values = c("#DC0000B2","#3C5488B2")) +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"), .3)) +
+  geom_segment(aes(x = 2.5, y = -10, xend = 2.5, yend = 100), color = "grey") +
+  annotate(geom = "text", x = 1.5, y = 130, color = "black", size = 2, label = "paste(italic(P), \" = 4 x \", 10 ^ -9)", parse = TRUE) +
+  annotate(geom = "text", x = 3.5, y = 128, color = "black", size = 2, label = "paste(italic(P), \" = 0.006\")", parse = TRUE) +
+  annotate(geom = "text", x = c(1.5,3.5), y = 170, label = c("DS1","DS2"), color = "black", size = 2) +
+  labs(tag = "A", x = "Immunogenicity", y = "TCEM frequency") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS9_1
+rm(ligands_nonhuman)
+```
+
+##B Expression
+###Loess D1
+
+```{r}
+load("21out/ligands_nonhuman_d1_wosecanc")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+table(ligands_nonhuman$trig)
+ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$trig)
+plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
+figS9_2 = ggplot(plotdata, aes(x, y)) + 
+  geom_point(size = .2) +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  coord_cartesian(xlim = c(0,1)) +
+  annotate(geom = "text", x = .91, y = max(plotdata$y), label = "DS1", color = "black", size = 2) +
+  labs(tag = "B", x = "Percentile of TCEM expression", y = "Probability of being immunogenic") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 7),
+    axis.title.y = element_text(size = 7),
+    axis.text.x = element_text(size = 6, color = "black"),
+    axis.text.y = element_text(size = 6, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS9_2
+rm(ligands_nonhuman, plotdata)
+```
+
+###Loess D2
+
+```{r}
+load("21out/ligands_nonhuman_d2_wosecanc")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+table(ligands_nonhuman$trig)
+ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+
+plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$trig)
+plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
+figS9_3 = ggplot(plotdata, aes(x, y)) + 
+  geom_point(size = .2) +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  scale_x_continuous(limits = c(0,1)) +
+  annotate(geom = "text", x = .91, y = max(plotdata$y), label = "DS2", color = "black", size = 2) +
+  labs(tag = " ", x = "Percentile of TCEM expression", y = "Probability of being immunogenic") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 7),
+    axis.title.y = element_text(size = 7),
+    axis.text.x = element_text(size = 6, color = "black"),
+    axis.text.y = element_text(size = 6, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS9_3
+rm(ligands_nonhuman, plotdata)
+```
+
+###Density
+
+```{r}
+load("21out/ligands_nonhuman_d1_wosecanc")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+
+figS9_4 <- ggplot() + 
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 0,]) +
+  coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
+  annotate(geom = "text", x = .91, y = 1.2, label = "DS1", color = "black", size = 2) +
+  labs(tag = " ", x = "Percentile of TCEM expression", y = "Density", fill = "Group") +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 7, vjust = 0),
+    axis.title.y = element_text(size = 7, vjust = 5),
+    axis.text.x = element_text(size = 6, color = "black"),
+    axis.text.y = element_text(size = 6, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    legend.title = element_text(size = 6, color = "black"),
+    legend.text = element_text(size = 6, color = "black"),
+    legend.box.spacing = unit(0,"cm"),
+    legend.key.height = unit(.1, "cm"),
+    legend.key.width = unit(.2, "cm"),
+    legend.direction = "horizontal",
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS9_4
+
+load("21out/ligands_nonhuman_d2_wosecanc")
+ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+
+figS9_5 <- ggplot() + 
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 0,]) +
+  coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
+  labs(tag = " ", x = "Percentile of TCEM expression", y = "Density", fill = "Group") +
+  annotate(geom = "text", x = .91, y = 1.2, label = "DS2", color = "black", size = 2) +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 7, vjust = 0),
+    axis.title.y = element_text(size = 7, vjust = 3),
+    axis.text.x = element_text(size = 6, color = "black"),
+    axis.text.y = element_text(size = 6, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    legend.title = element_text(size = 6, color = "black"),
+    legend.text = element_text(size = 6, color = "black"),
+    legend.box.spacing = unit(0,"cm"),
+    legend.key.height = unit(.1, "cm"),
+    legend.key.width = unit(.2, "cm"),
+    legend.direction = "horizontal",
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS9_5
+
+figS9_45 = ggarrange(figS9_4, figS9_5, ncol=2, common.legend = TRUE, legend = "top")
+figS9_45
+rm(figS9_4, figS9_5, ligands_nonhuman)
+```
+
+##C Proteasomal cleavage
+###Thymoproteasome
+
+```{r}
+load("21out/ligands_nonhuman_d1d2_wosecanc")
+ligands_nonhuman %<>% filter(!is.na(thymopscore))
+table(ligands_nonhuman$group)
+wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+
+figS9_6 = ggplot(ligands_nonhuman, aes(x = group, y = thymopscore, color = trig, fill = trig)) + 
+  geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
+  scale_x_discrete(labels = c("+","-","+","-")) +
+  coord_cartesian(ylim = c(.75,1.25)) +
+  scale_color_manual(values = c("#DC0000B2","#3C5488B2")) +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"), .3)) +
+  geom_segment(aes(x = 2.5, y = .7, xend = 2.5, yend = 1.2), color = "grey") +
+  annotate(geom = "text", x = 1.5, y = 1.222, color = "black", size = 2, label = "paste(italic(P), \" = 0.013\")", parse = TRUE) +
+  annotate(geom = "text", x = 3.5, y = 1.222, color = "black", size = 2, label = "paste(italic(P), \" = 0.019\")", parse = TRUE) +
+  annotate(geom = "text", x = c(1.5,3.5), y = 1.25, label = c("DS1","DS2"), color = "black", size = 2) +
+  labs(tag = "C", x = "Immunogenicity", y = "Thymoproteasomal cleavage score") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS9_6
+rm(ligands_nonhuman)
+```
+
+###Immunoproteasome
+
+```{r}
+load("21out/ligands_nonhuman_d1d2_wosecanc")
+ligands_nonhuman %<>% filter(!is.na(immunopscore))
+table(ligands_nonhuman$group)
+
+wilcox.test(immunopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(immunopscore ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+
+figS9_7 = ggplot(ligands_nonhuman, aes(x = group, y = immunopscore, color = trig, fill = trig)) + 
+  geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
+  scale_x_discrete(labels = c("+","-","+","-")) +
+  coord_cartesian(ylim = c(.55,1.45)) +
+  scale_color_manual(values = c("#DC0000B2","#3C5488B2")) +
+  scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"), .3)) +
+  geom_segment(aes(x = 2.5, y = 0.5, xend = 2.5, yend = 1.35), color = "grey") +
+  annotate(geom = "text", x = 1.5, y = 1.4, color = "black", size = 2, label = "paste(italic(P), \" = 0.128\")", parse = TRUE) +
+  annotate(geom = "text", x = 3.5, y = 1.4, color = "black", size = 2, label = "paste(italic(P), \" = 0.356\")", parse = TRUE) +
+  annotate(geom = "text", x = c(1.5,3.5), y = 1.45, label = c("DS1", "DS2"), color = "black", size = 2) +
+  labs(tag = "", x = "Immunogenicity", y = "Immunoproteasomal cleavage score") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 7, color = "black"),
+    axis.text.y = element_text(size = 7, color = "black"),
+    plot.tag = element_text(size = 9, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS9_7
+rm(ligands_nonhuman)
+```
+
+##COMBINE
+
+```{r}
+lay = cbind(c(1,1,1,1),c(1,1,1,1),c(1,1,1,1),c(2,2,4,4),c(2,2,4,4),c(2,2,4,4),c(2,2,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(5,5,5,5),c(5,5,5,5),c(5,5,5,5),c(6,6,6,6),c(6,6,6,6),c(6,6,6,6))
+margin12367 = theme(plot.margin = unit(c(.1,.1,.24,.1), "cm"))
+margin45 = theme(plot.margin = unit(c(.1,.1,.1,.25), "cm"))
+figS9 = grid.arrange(grobs = c(lapply(list(figS9_1, figS9_2, figS9_3), "+", margin12367), 
+                              lapply(list(figS9_45), "+", margin45), 
+                              lapply(list(figS9_6, figS9_7), "+", margin12367)), layout_matrix = lay)
+ggsave(figS9, filename = "supp_plots_rs/FigS9_secanc.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+```
+
+##Freqtable
+
+```{r}
+load("21out/ligands_nonhuman_d1_wosecanc")
+load("21out/ligands_nonhuman_d2_wosecanc")
+
+ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #1: <median, 2: >= median. Median = 4.
+table(ligands_nonhuman$freqpenta_tcem_group)
+fisher.test(ligands_nonhuman$trig, ligands_nonhuman$freqpenta_tcem_group)
+
+ligands_nonhuman$pentamer_expression_group = cut(x = ligands_nonhuman$pentamer_expression, breaks = c(min(ligands_nonhuman$pentamer_expression,na.rm=T),quantile(ligands_nonhuman$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$pentamer_expression_group)
+fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(1,2)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(1,2)])
+fisher.test(ligands_nonhuman$trig[ligands_nonhuman$pentamer_expression_group %in% c(2,3)], ligands_nonhuman$pentamer_expression_group[ligands_nonhuman$pentamer_expression_group %in% c(2,3)])
+1/1.32968
+1/1.796378
+
+ligands_nonhuman$thymopscore_group = cut(x = ligands_nonhuman$thymopscore, breaks = quantile(ligands_nonhuman$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$thymopscore_group)
+fisher.test(ligands_nonhuman$trig, ligands_nonhuman$thymopscore_group)
+
+ligands_nonhuman$immunopscore_group = cut(x = ligands_nonhuman$immunopscore, breaks = quantile(ligands_nonhuman$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(ligands_nonhuman$immunopscore_group)
+fisher.test(ligands_nonhuman$trig, ligands_nonhuman$immunopscore_group)
+```
+
+#FigS10 Chowell
+
+```{r}
+chowell = read.delim("../objects/Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #9888
+load("objects/ligands_nonhuman_d1d2")
+chowell = chowell[chowell$dissimilarity > 0,] #4263
+chowell = chowell[is.na(fmatch(chowell$nmer, ligands_nonhuman$epitope)),] #3430
+rm(ligands_nonhuman)
+chowell$group = cut(chowell$dissimilarity, breaks = unique(quantile(chowell$dissimilarity, seq(0,1,0.04))), include.lowest = T, ordered_result = T)
+table(chowell$group, chowell$Immunogenicity)
+
+groups = chowell %>% 
+  group_by(group, Immunogenicity) %>% 
+  dplyr::summarise(n = n()) %>% 
+  tidyr::spread(key = Immunogenicity, value = n) %>% 
+  mutate(n_pep = Negative+Positive) %>% 
+  mutate(ratio = Positive/Negative) %>%
+  ungroup() %>% 
+  dplyr::select(group, ratio) %>% 
+  mutate(group_num = 1:25)
+
+wm = which.max(groups$ratio)
+rcorr(x = groups$group_num[1:wm], y = groups$ratio[1:wm], type = "spearman")
+rcorr(x = groups$group_num[wm:nrow(groups)], y = groups$ratio[wm:nrow(groups)], type = "spearman")
+
+sapply(unique(quantile(chowell$dissimilarity, seq(0,1,0.04))), function(x) strsplit(formatC(x, format = "e", digits = 1), "e")[[1]][1])
+sapply(unique(quantile(chowell$dissimilarity, seq(0,1,0.04))), function(x) strsplit(formatC(x, format = "e", digits = 1), "e")[[1]][2])
+groups$group
+figxlab = c(expression('[' ~ 2.0 ~ 'x' ~ 10^{-15} ~ "," ~ 2.9 ~ 'x' ~ 10^{-14} ~ ']'),
+           expression('(' ~ 2.9 ~ 'x' ~ 10^{-14} ~ "," ~ 6.8 ~ 'x' ~ 10^{-14} ~ ']'),
+           expression('(' ~ 6.8 ~ 'x' ~ 10^{-14} ~ "," ~ 2.0 ~ 'x' ~ 10^{-13} ~ ']'),
+           expression('(' ~ 2.0 ~ 'x' ~ 10^{-13} ~ "," ~ 6.7 ~ 'x' ~ 10^{-12} ~ ']'),
+           expression('(' ~ 6.7 ~ 'x' ~ 10^{-12} ~ "," ~ 1.3 ~ 'x' ~ 10^{-11} ~ ']'),
+           expression('(' ~ 1.3 ~ 'x' ~ 10^{-11} ~ "," ~ 1.8 ~ 'x' ~ 10^{-10} ~ ']'),
+           expression('(' ~ 1.8 ~ 'x' ~ 10^{-10} ~ "," ~ 8.7 ~ 'x' ~ 10^{-10} ~ ']'),
+           expression('(' ~ 8.7 ~ 'x' ~ 10^{-10} ~ "," ~ 1.7 ~ 'x' ~ 10^{-9} ~ ']'),
+           expression('(' ~ 1.7 ~ 'x' ~ 10^{-9} ~ "," ~ 4.4 ~ 'x' ~ 10^{-9} ~ ']'),
+           expression('(' ~ 4.4 ~ 'x' ~ 10^{-9} ~ "," ~ 9.0 ~ 'x' ~ 10^{-8} ~ ']'),
+           expression('(' ~ 9.0 ~ 'x' ~ 10^{-8} ~ "," ~ 1.5 ~ 'x' ~ 10^{-7} ~ ']'),
+           expression('(' ~ 1.5 ~ 'x' ~ 10^{-7} ~ "," ~ 4.5 ~ 'x' ~ 10^{-7} ~ ']'),
+           expression('(' ~ 4.5 ~ 'x' ~ 10^{-7} ~ "," ~ 7.4 ~ 'x' ~ 10^{-6} ~ ']'),
+           expression('(' ~ 7.4 ~ 'x' ~ 10^{-6} ~ "," ~ 1.5 ~ 'x' ~ 10^{-5} ~ ']'),
+           expression('(' ~ 1.5 ~ 'x' ~ 10^{-5} ~ "," ~ 2.9 ~ 'x' ~ 10^{-5} ~ ']'),
+           expression('(' ~ 2.9 ~ 'x' ~ 10^{-5} ~ "," ~ 2.4 ~ 'x' ~ 10^{-4} ~ ']'),
+           expression('(' ~ 2.4 ~ 'x' ~ 10^{-4} ~ "," ~ 0.0018 ~ ']'),
+           expression('(' ~ 0.0018 ~ "," ~ 0.0038 ~ ']'),
+           expression('(' ~ 0.0038 ~ "," ~ 0.0555 ~ ']'),
+           expression('(' ~ 0.0555 ~ "," ~ 0.1991 ~ ']'),
+           expression('(' ~ 0.1991 ~ "," ~ 0.4867 ~ ']'),
+           expression('(' ~ 0.4867 ~ "," ~ 0.9624 ~ ']'),
+           expression('(' ~ 0.9624 ~ "," ~ 0.992 ~ ']'),
+           expression('(' ~ 0.992 ~ "," ~ 0.9999 ~ ']'),
+           expression('(' ~ 0.9999 ~ "," ~ 1 ~ ']'))
+
+figS10_chowell = ggplot(groups, aes(group_num, ratio)) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = groups$group_num, labels = figxlab) +
+  geom_smooth(method = NULL, se = F, linetype = "dashed", col = "black", size = 0.5, span = 0.6) +
+  geom_vline(xintercept = groups$group_num[wm], linetype = "dashed", color = "red") +
+  labs(x = "Dissimilarity value range of groups", y = "Ratio of immunogenic and non-immunogenic peptides") +
+  annotate(geom = "text", x = 5, y = 12, color = "black", size = 2, label = "paste(italic(rho), \" = 0.82, \", italic(P), \" = 2 x \", 10 ^ -4)", parse = TRUE) +
+  annotate(geom = "text", x = 20, y = 17, color = "black", size = 2, label = "paste(italic(rho), \" = -0.62, \", italic(P), \" = 0.04\")", parse = TRUE) +
+  theme_bw() +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.x = element_text(size = 6, color = "black", angle = 90, vjust = 0.3, hjust = 1),
+    axis.text.y = element_text(size = 6, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figS10_chowell
+ggsave(figS10_chowell, filename = "supp_plots_rs/figS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
+
+rm(chowell, groups, b, b_exp, wm)
+```
+
+#FigS11 Cross-reactivity
+
+```{r}
+aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AABLOSUM62)) {
+  sum(mtx[cbind(fmatch(unlist(strsplit(seq_1, "")), aas), fmatch(unlist(strsplit(seq_2, "")), aas))])
+}
+
+#A6
+tbl = read.delim("../crossreact/A6_position_depletion_matrix.csv", sep = ",", stringsAsFactors = F)
+peptide = paste0(tbl$amino_acid[tbl$annotation == "target"], collapse = "")
+tbl$sequence = apply(tbl, 1, FUN = function(x) {
+  seq = peptide
+  substr(seq, as.numeric(x[1]), as.numeric(x[1])) = x[2]
+  seq
+})
+tbl = tbl[1:172,]
+tbl$TCEM = substr(tbl$sequence, 4, 8)
+selfdist = aLign(tbl$TCEM[172], tbl$TCEM[172])
+tbl$dist = sapply(tbl$TCEM, FUN = function(x) {
+  aLign(x, tbl$TCEM[172])/sqrt(selfdist*aLign(x,x))
+})
+plot(tbl$dist, tbl$value)
+rcorr(tbl$dist, tbl$value, type = "spearman")
+rcorr(tbl$dist, tbl$value, type = "spearman")$P
+boxplot(tbl$value ~ tbl$dist > 0.8)
+wilcox.test(tbl$value ~ tbl$dist > 0.8)
+
+figs11a = ggplot(tbl, aes(dist, value)) +
+  geom_point(size = 1) +
+  geom_smooth(method = "gam", se = F, color = "red") +
+  geom_hline(yintercept = 1, color = "black", linetype = "dashed") +
+  geom_vline(xintercept = 0.61, color = "black", linetype = "dashed") +
+  annotate(geom = "text", x = .9, y = 1.2, color = "black", size = 3, label = "paste(italic(rho), \" = 0.43, \", italic(P), \" = 5 x \", 10 ^ -9)", parse = TRUE) +
+  labs(tag = "A", x = "BLOSUM62 similarity between the original and the modified sequence", y = "Minigene depletion") +
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x = element_text(size = 8, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 10, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figs11a
+rm(tempcor, peptide, selfdist)
+
+pred = prediction(predictions = tbl$dist, labels = tbl$value < 1)
+perf = performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf)
+auc = performance(pred, measure = "auc")
+text(0.9,0.2, paste0("AUC = ", round(unlist(auc@y.values), 2)))
+tbl$status = as.character(tbl$value < 1)
+optimal.cutpoints(X = "dist", status = "status", tag.healthy = "FALSE", methods = "CB", data = tbl)
+
+df = data.frame(fpr = unlist(perf@x.values,use.names = F), tpr = unlist(perf@y.values, use.names = F))
+
+figs11b = ggplot(df, aes(fpr,tpr)) + 
+  geom_line() +
+  geom_abline(slope = 1, linetype = "dashed") +
+  annotate(geom = "text", x = .25, y = .9, label = paste0("AUC = ", round(unlist(auc@y.values), 2)), color = "black", size = 3) +
+  labs(tag = "B", x = "False positive rate", y = "True positive rate") +  
+  theme_bw() +
+  theme(
+    legend.position = "none",
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9),
+    axis.text.x = element_text(size = 8, color = "black"),
+    axis.text.y = element_text(size = 8, color = "black"),
+    plot.tag = element_text(size = 10, color = "black"),
+    panel.border = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"))
+figs11b
+rm(auc, df, perf, pred, tbl, aLign)
+
+#COMBINE
+figs11 = grid.arrange(grobs = list(figs11a,figs11b), ncol = 2)
+ggsave(figs11, filename = "supp_plots_rs/FigS11.png", width = 22, height = 11, units = "cm", dpi = "retina")
+
+```
+
+#Table S2 - Fishers
+
+```{r}
+load("objects/ligands_nonhuman_d1")
+load("objects/ligands_nonhuman_d2")
+
+#TCEMFREQ
+dataset = ligands_nonhuman
+dataset$group = cut(x = dataset$freqpenta_tcem, breaks = c(min(dataset$freqpenta_tcem),median(dataset$freqpenta_tcem),max(dataset$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+table(dataset$group,dataset$trig)
+fisher.test(dataset$group, dataset$trig)
+
+#EXPR
+dataset = ligands_nonhuman %>% filter(!is.na(pentamer_expression))
+dataset$group = cut(x = dataset$pentamer_expression, breaks = c(min(dataset$pentamer_expression),quantile(dataset$pentamer_expression,c(0.15,0.75)),max(dataset$pentamer_expression)), labels = F, include.lowest = T, right = F)
+table(dataset$group,dataset$trig)
+fisher.test(dataset$group[dataset$group %in% c(1,2)], dataset$trig[dataset$group %in% c(1,2)])
+
+#THYMO
+dataset = ligands_nonhuman %>% filter(!is.na(thymopscore))
+dataset$group = cut(x = dataset$thymopscore, breaks = quantile(dataset$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+table(dataset$group,dataset$trig)
+fisher.test(dataset$group, dataset$trig)
+
+#TCEMFREQ & EXPR
+dataset = ligands_nonhuman %>% filter(!is.na(pentamer_expression))
+dataset$group = NA
+dataset$group[dataset$freqpenta_tcem < 4 & dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15)] = 1
+dataset$group[dataset$freqpenta_tcem >= 4 & dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75)] = 2
+table(dataset$group,dataset$trig)
+fisher.test(dataset$group, dataset$trig)
+
+#TCEMFREQ & THYMO
+dataset = ligands_nonhuman %>% filter(!is.na(freqpenta_tcem),!is.na(thymopscore))
+dataset$group = NA
+dataset$group[dataset$freqpenta_tcem < 4 & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
+dataset$group[dataset$freqpenta_tcem >= 4 & dataset$thymopscore >= quantile(dataset$thymopscore,0.25)] = 2
+table(dataset$group,dataset$trig)
+fisher.test(dataset$group, dataset$trig)
+
+#EXPR & THYMO
+dataset = ligands_nonhuman %>% filter(!is.na(pentamer_expression),!is.na(thymopscore))
+dataset$group = NA
+dataset$group[dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15) & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
+dataset$group[dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75) & dataset$thymopscore >= quantile(dataset$thymopscore,0.25)] = 2
+table(dataset$group,dataset$trig)
+fisher.test(dataset$group, dataset$trig)
+
+#TCEMFREQ & EXPR & THYMO
+dataset = ligands_nonhuman %>% filter(!is.na(pentamer_expression),!is.na(thymopscore))
+dataset$group = NA
+dataset$group[dataset$freqpenta_tcem < 4 & dataset$pentamer_expression < quantile(dataset$pentamer_expression,0.15) & dataset$thymopscore < quantile(dataset$thymopscore,0.25)] = 1
+dataset$group[dataset$freqpenta_tcem >= 4 & dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75) & dataset$thymopscore > quantile(dataset$thymopscore,0.25)] = 2
+table(dataset$group,dataset$trig)
+fisher.test(dataset$group, dataset$trig)
+
+```
+
+#Table S3 Aminosav
+
