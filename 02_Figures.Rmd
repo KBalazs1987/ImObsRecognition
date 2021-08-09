@@ -49,12 +49,12 @@ rm(mypal)
 
 ```{r}
 load("ligands_nonhuman_d1d2")
-wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d1"))
-wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
 table(ligands_nonhuman$group)
 
-fig1_1 = ggplot(ligands_nonhuman, aes(x = group, y = freqpenta_tcem, color = trig, fill = trig)) + 
+fig1_1 = ggplot(ligands_nonhuman, aes(x = group, y = freqpenta_tcem, color = immunogenicity, fill = immunogenicity)) + 
   geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
   scale_x_discrete(labels = c("+","-","+","-")) +
   coord_cartesian(ylim = c(0,170)) +
@@ -87,10 +87,10 @@ rm(ligands_nonhuman)
 
 ```{r}
 load("ligands_nonhuman_d1")
-ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-table(ligands_nonhuman$trig)
-ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
-plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$trig)
+ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
+table(ligands_nonhuman_d1$immunogenicity)
+ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression)
+plotdata = plsmo(x = ligands_nonhuman_d1$expperc, y = ligands_nonhuman_d1$immunogenicity)
 plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
 fig1_2 = ggplot(plotdata, aes(x, y)) + 
   geom_point(size = .2) +
@@ -110,18 +110,18 @@ fig1_2 = ggplot(plotdata, aes(x, y)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig1_2
-rm(ligands_nonhuman, plotdata)
+rm(ligands_nonhuman_d1, plotdata)
 ```
 
 ###Loess D2
 
 ```{r}
 load("ligands_nonhuman_d2")
-ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-table(ligands_nonhuman$trig)
-ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
+table(ligands_nonhuman_d2$immunogenicity)
+ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression)
 
-plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$trig)
+plotdata = plsmo(x = ligands_nonhuman_d2$expperc, y = ligands_nonhuman_d2$immunogenicity)
 plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
 fig1_3 = ggplot(plotdata, aes(x, y)) + 
   geom_point(size = .2) +
@@ -141,19 +141,19 @@ fig1_3 = ggplot(plotdata, aes(x, y)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig1_3
-rm(ligands_nonhuman, plotdata)
+rm(ligands_nonhuman_d2, plotdata)
 ```
 
 ###Density
 
 ```{r}
 load("ligands_nonhuman_d1")
-ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression)
 
 fig1_4 <- ggplot() + 
-  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 1,]) +
-  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 0,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
@@ -179,12 +179,12 @@ fig1_4 <- ggplot() +
 fig1_4
 
 load("ligands_nonhuman_d2")
-ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression)
 
 fig1_5 <- ggplot() + 
-  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 1,]) +
-  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 0,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman_d2[ligands_nonhuman_d2$immunogenicity == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman_d2[ligands_nonhuman_d2$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
@@ -211,7 +211,7 @@ fig1_5
 
 fig1_45 = ggarrange(fig1_4, fig1_5, ncol=2, common.legend = TRUE, legend = "top")
 fig1_45
-rm(fig1_4, fig1_5, ligands_nonhuman)
+rm(fig1_4, fig1_5, ligands_nonhuman_d2)
 ```
 
 ##C Proteasomal cleavage
@@ -221,10 +221,10 @@ rm(fig1_4, fig1_5, ligands_nonhuman)
 load("ligands_nonhuman_d1d2")
 ligands_nonhuman %<>% filter(!is.na(thymopscore))
 table(ligands_nonhuman$group)
-wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
-wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+wilcox.test(thymopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(thymopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
-fig1_6 = ggplot(ligands_nonhuman, aes(x = group, y = thymopscore, color = trig, fill = trig)) + 
+fig1_6 = ggplot(ligands_nonhuman, aes(x = group, y = thymopscore, color = immunogenicity, fill = immunogenicity)) + 
   geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
   scale_x_discrete(labels = c("+","-","+","-")) +
   coord_cartesian(ylim = c(.75,1.25)) +
@@ -258,10 +258,10 @@ load("ligands_nonhuman_d1d2")
 ligands_nonhuman %<>% filter(!is.na(immunopscore))
 table(ligands_nonhuman$group)
 
-wilcox.test(immunopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
-wilcox.test(immunopscore ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+wilcox.test(immunopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(immunopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
-fig1_7 = ggplot(ligands_nonhuman, aes(x = group, y = immunopscore, color = trig, fill = trig)) + 
+fig1_7 = ggplot(ligands_nonhuman, aes(x = group, y = immunopscore, color = immunogenicity, fill = immunogenicity)) + 
   geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
   scale_x_discrete(labels = c("+","-","+","-")) +
   coord_cartesian(ylim = c(.55,1.45)) +
@@ -544,7 +544,7 @@ load("ligands_nonhuman_d1d2")
 ligands_nonhuman$bl62score_group = cut(ligands_nonhuman$bl62score, 25)
 table(ligands_nonhuman$bl62score_group)
 
-groups = aggregate(ligands_nonhuman$trig ~ ligands_nonhuman$bl62score_group, FUN = function(x)  {
+groups = aggregate(ligands_nonhuman$immunogenicity ~ ligands_nonhuman$bl62score_group, FUN = function(x)  {
   temp = table(factor(x, levels = c("1", "0")))
   temp["1"]/temp["0"]
   })
@@ -839,7 +839,7 @@ save(res, file = "../articleplots_objects/pathogen_res")
 ##A Barchart
 
 ```{r}
-load("../articleplots_objects/pathogen_fract")
+load("D:/CloudStation/pentamer_project/articleplots_objects/pathogen_fract")
 fract %<>% mutate(ratio_conv = ratio - 0.5)
 
 #PLOT
@@ -871,7 +871,7 @@ rm(fract)
 ##B Heatmap
 
 ```{r}
-load("../articleplots_objects/pathogen_heatmapmtx")
+load("D:/CloudStation/pentamer_project/articleplots_objects/pathogen_heatmapmtx")
 fig5b_ch = Heatmap(matrix = heatmapmtx,
                    col = colorRampPalette(c("#3C5488B2", "white", "#DC0000B2"))(10),
                    rect_gp = gpar(col = "grey60", lwd = .5),
@@ -889,13 +889,14 @@ fig5b_ch = Heatmap(matrix = heatmapmtx,
                                                grid_width = unit(0.2, "cm"), 
                                                labels_gp = gpar(fontsize = 7)))
 fig5b = grid.grabExpr(draw(fig5b_ch, heatmap_legend_side = "bottom", padding = unit(c(0, .38, 0, .22), "cm")))
+draw(fig5b_ch)
 rm(heatmapmtx, fig5b_ch)
 ```
 
 ##C Dotplot
 
 ```{r}
-load("../articleplots_objects/pathogen_fract")
+load("D:/CloudStation/pentamer_project/articleplots_objects/pathogen_fract")
 
 fig5c = ggplot(fract, aes(x = species, y = variance)) + 
   geom_point(size = 1.5) +
@@ -978,13 +979,13 @@ Sequences of T cell activating and non-activating epitopes have similar diversit
 load("ligands_nonhuman_d2")
 
 #Not trigger
-pss_nt = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$trig == 0]), cores = 6, submat = "BLOSUM62")
+pss_nt = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$immunogenicity == 0]), cores = 6, submat = "BLOSUM62")
 #save(pss_nt_d2, file = "objects/pss_nt_figs2")
 pss_nt_values = pss_nt[upper.tri(pss_nt)]
 l1 = length(pss_nt_values)
 
 #Trigger
-pss_t = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$trig == 1]), cores = 6, submat = "BLOSUM62")
+pss_t = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$immunogenicity == 1]), cores = 6, submat = "BLOSUM62")
 #save(pss_t_d2, file = "objects/pss_t_d2")
 pss_t_values = pss_t[upper.tri(pss_t)]
 l2 = length(pss_t_values)
@@ -1608,7 +1609,7 @@ for(i in 1:nrow(ligands_nonhuman)) {
 table(ligands_nonhuman$excluded)
 ligands_nonhuman %<>% filter(excluded == FALSE)
 save(ligands_nonhuman, file = "ligands_nonhuman_d1_wosecanc")
-dataset_1 = cbind(ligands_nonhuman[,c("allele", "epitope", "trig", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
+dataset_1 = cbind(ligands_nonhuman[,c("allele", "epitope", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
 
 
 load("ligands_nonhuman_d2")
@@ -1628,16 +1629,16 @@ for(i in 1:nrow(ligands_nonhuman)) {
 table(ligands_nonhuman$excluded)
 ligands_nonhuman %<>% filter(excluded == FALSE)
 save(ligands_nonhuman, file = "ligands_nonhuman_d2_wosecanc")
-dataset_2 = cbind(ligands_nonhuman[,c("allele", "epitope", "trig", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
+dataset_2 = cbind(ligands_nonhuman[,c("allele", "epitope", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
 
 ligands_nonhuman = rbind(dataset_1, dataset_2)
 rm(dataset_1, dataset_2)
 ligands_nonhuman %<>% 
     mutate(group = case_when(
-    .$dataset == "d1" & .$trig == 0 ~ "d1_nim",
-    .$dataset == "d1" & .$trig == 1 ~ "d1_im",
-    .$dataset == "d2" & .$trig == 0 ~ "d2_nim",
-    .$dataset == "d2" & .$trig == 1 ~ "d2_im",
+    .$dataset == "d1" & .$immunogenicity == 0 ~ "d1_nim",
+    .$dataset == "d1" & .$immunogenicity == 1 ~ "d1_im",
+    .$dataset == "d2" & .$immunogenicity == 0 ~ "d2_nim",
+    .$dataset == "d2" & .$immunogenicity == 1 ~ "d2_im",
   )) %>% 
   transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
 save(ligands_nonhuman, file = "ligands_nonhuman_d1d2_wosecanc") #3930
@@ -1647,12 +1648,12 @@ save(ligands_nonhuman, file = "ligands_nonhuman_d1d2_wosecanc") #3930
 
 ```{r}
 load("ligands_nonhuman_d1d2_wosecanc")
-wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d1"))
-wilcox.test(freqpenta_tcem ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
 table(ligands_nonhuman$group)
 
-figS9_1 = ggplot(ligands_nonhuman, aes(x = group, y = freqpenta_tcem, color = trig, fill = trig)) + 
+figS9_1 = ggplot(ligands_nonhuman, aes(x = group, y = freqpenta_tcem, color = immunogenicity, fill = immunogenicity)) + 
   geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
   scale_x_discrete(labels = c("+","-","+","-")) +
   coord_cartesian(ylim = c(0,170)) +
@@ -1686,9 +1687,9 @@ rm(ligands_nonhuman)
 ```{r}
 load("ligands_nonhuman_d1_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-table(ligands_nonhuman$trig)
+table(ligands_nonhuman$immunogenicity)
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
-plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$trig)
+plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$immunogenicity)
 plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
 figS9_2 = ggplot(plotdata, aes(x, y)) + 
   geom_point(size = .2) +
@@ -1716,10 +1717,10 @@ rm(ligands_nonhuman, plotdata)
 ```{r}
 load("ligands_nonhuman_d2_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-table(ligands_nonhuman$trig)
+table(ligands_nonhuman$immunogenicity)
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
 
-plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$trig)
+plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$immunogenicity)
 plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
 figS9_3 = ggplot(plotdata, aes(x, y)) + 
   geom_point(size = .2) +
@@ -1750,8 +1751,8 @@ ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
 
 figS9_4 <- ggplot() + 
-  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 1,]) +
-  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 0,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$immunogenicity == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
@@ -1781,8 +1782,8 @@ ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
 
 figS9_5 <- ggplot() + 
-  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 1,]) +
-  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$trig == 0,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$immunogenicity == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
@@ -1819,10 +1820,10 @@ rm(figS9_4, figS9_5, ligands_nonhuman)
 load("ligands_nonhuman_d1d2_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(thymopscore))
 table(ligands_nonhuman$group)
-wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
-wilcox.test(thymopscore ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+wilcox.test(thymopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(thymopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
-figS9_6 = ggplot(ligands_nonhuman, aes(x = group, y = thymopscore, color = trig, fill = trig)) + 
+figS9_6 = ggplot(ligands_nonhuman, aes(x = group, y = thymopscore, color = immunogenicity, fill = immunogenicity)) + 
   geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
   scale_x_discrete(labels = c("+","-","+","-")) +
   coord_cartesian(ylim = c(.75,1.25)) +
@@ -1856,10 +1857,10 @@ load("ligands_nonhuman_d1d2_wosecanc")
 ligands_nonhuman %<>% filter(!is.na(immunopscore))
 table(ligands_nonhuman$group)
 
-wilcox.test(immunopscore ~ trig, subset(ligands_nonhuman, dataset == "d1"))
-wilcox.test(immunopscore ~ trig, subset(ligands_nonhuman, dataset == "d2"))
+wilcox.test(immunopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
+wilcox.test(immunopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
-figS9_7 = ggplot(ligands_nonhuman, aes(x = group, y = immunopscore, color = trig, fill = trig)) + 
+figS9_7 = ggplot(ligands_nonhuman, aes(x = group, y = immunopscore, color = immunogenicity, fill = immunogenicity)) + 
   geom_boxplot(outlier.shape = NA, lwd = .5, width = .6) +
   scale_x_discrete(labels = c("+","-","+","-")) +
   coord_cartesian(ylim = c(.55,1.45)) +
