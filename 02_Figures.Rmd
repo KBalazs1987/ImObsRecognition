@@ -12,18 +12,19 @@ output:
 
 ```{r}
 setwd("D:/CloudStation/mygit/ImObsRecognition/")
+library(scales)
+library(ggsci)
 library(ggplot2)
 library(magrittr)
 library(dplyr)
 library(Hmisc)
 library(ggpubr)
 library(gridExtra)
+
 library(fastmatch)
 library(ROCR)
 library(OptimalCutpoints)
 library(grid)
-library(ggsci)
-library(scales)
 library(ComplexHeatmap)
 library(ggrepel)
 library(png)
@@ -51,7 +52,6 @@ rm(mypal)
 load("ligands_nonhuman_d1d2")
 wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
 wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
-
 table(ligands_nonhuman$group)
 
 fig1_1 = ggplot(ligands_nonhuman, aes(x = group, y = freqpenta_tcem, color = immunogenicity, fill = immunogenicity)) + 
@@ -79,19 +79,21 @@ fig1_1 = ggplot(ligands_nonhuman, aes(x = group, y = freqpenta_tcem, color = imm
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig1_1
+
 rm(ligands_nonhuman)
 ```
 
 ##B Expression
-###Loess D1
+###Loess D1 (upper plot)
 
 ```{r}
 load("ligands_nonhuman_d1")
 ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman_d1$immunogenicity)
-ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression)
+ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression) #gene expression values were transformed by calculating their percentile rank
 plotdata = plsmo(x = ligands_nonhuman_d1$expperc, y = ligands_nonhuman_d1$immunogenicity)
 plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
+
 fig1_2 = ggplot(plotdata, aes(x, y)) + 
   geom_point(size = .2) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
@@ -110,22 +112,23 @@ fig1_2 = ggplot(plotdata, aes(x, y)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig1_2
+
 rm(ligands_nonhuman_d1, plotdata)
 ```
 
-###Loess D2
+###Loess D2 (upper plot)
 
 ```{r}
 load("ligands_nonhuman_d2")
 ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman_d2$immunogenicity)
-ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression)
-
+ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression) #gene expression values were transformed by calculating their percentile rank
 plotdata = plsmo(x = ligands_nonhuman_d2$expperc, y = ligands_nonhuman_d2$immunogenicity)
 plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
+
 fig1_3 = ggplot(plotdata, aes(x, y)) + 
   geom_point(size = .2) +
-  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") + #cutoff values
   scale_x_continuous(limits = c(0,1)) +
   annotate(geom = "text", x = .91, y = max(plotdata$y), label = "DS2", color = "black", size = 2) +
   labs(tag = " ", x = "Percentile of TCEM expression", y = "Probability of being immunogenic") +
@@ -141,21 +144,23 @@ fig1_3 = ggplot(plotdata, aes(x, y)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig1_3
+
 rm(ligands_nonhuman_d2, plotdata)
 ```
 
-###Density
+###Density (lower plots)
 
 ```{r}
+#D1
 load("ligands_nonhuman_d1")
 ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
-ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression)
+ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression) #gene expression values were transformed by calculating their percentile rank
 
 fig1_4 <- ggplot() + 
   geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 1,]) +
   geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
-  geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
+  geom_vline(xintercept = c(.15,.75), linetype = "dashed") + #cutoff values
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
   annotate(geom = "text", x = .91, y = 1.2, label = "DS1", color = "black", size = 2) +
   labs(tag = " ", x = "Percentile of TCEM expression", y = "Density", fill = "Group") +
@@ -177,10 +182,13 @@ fig1_4 <- ggplot() +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig1_4
+rm(ligands_nonhuman_d1)
 
+###############
+#D2
 load("ligands_nonhuman_d2")
 ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
-ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression)
+ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression) #gene expression values were transformed by calculating their percentile rank
 
 fig1_5 <- ggplot() + 
   geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman_d2[ligands_nonhuman_d2$immunogenicity == 1,]) +
@@ -211,6 +219,7 @@ fig1_5
 
 fig1_45 = ggarrange(fig1_4, fig1_5, ncol=2, common.legend = TRUE, legend = "top")
 fig1_45
+
 rm(fig1_4, fig1_5, ligands_nonhuman_d2)
 ```
 
@@ -248,6 +257,7 @@ fig1_6 = ggplot(ligands_nonhuman, aes(x = group, y = thymopscore, color = immuno
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig1_6
+
 rm(ligands_nonhuman)
 ```
 
@@ -257,7 +267,6 @@ rm(ligands_nonhuman)
 load("ligands_nonhuman_d1d2")
 ligands_nonhuman %<>% filter(!is.na(immunopscore))
 table(ligands_nonhuman$group)
-
 wilcox.test(immunopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
 wilcox.test(immunopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
@@ -285,6 +294,7 @@ fig1_7 = ggplot(ligands_nonhuman, aes(x = group, y = immunopscore, color = immun
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig1_7
+
 rm(ligands_nonhuman)
 ```
 
@@ -303,24 +313,28 @@ fig1 = grid.arrange(grobs = c(lapply(list(fig1_1, fig1_2, fig1_3), "+", margin12
 ##Data calculation for Fig1D 
 
 ```{r}
+#D1
 load("ligands_nonhuman_d1")
-ligands_nonhuman_d1$freqpenta_tcem_group = cut(x = ligands_nonhuman_d1$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d1$freqpenta_tcem),median(ligands_nonhuman_d1$freqpenta_tcem),max(ligands_nonhuman_d1$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
+ligands_nonhuman_d1$freqpenta_tcem_group = cut(x = ligands_nonhuman_d1$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d1$freqpenta_tcem),median(ligands_nonhuman_d1$freqpenta_tcem),max(ligands_nonhuman_d1$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #Peptides were classified based on their TCEM’s frequency in human proteins
 table(ligands_nonhuman_d1$freqpenta_tcem_group)
 fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$freqpenta_tcem_group)
 
-ligands_nonhuman_d1$pentamer_expression_group = cut(x = ligands_nonhuman_d1$pentamer_expression, breaks = c(min(ligands_nonhuman_d1$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d1$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d1$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
+ligands_nonhuman_d1$pentamer_expression_group = cut(x = ligands_nonhuman_d1$pentamer_expression, breaks = c(min(ligands_nonhuman_d1$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d1$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d1$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F) #Peptides were classified based on their TCEM’s expression in cTECs
 table(ligands_nonhuman_d1$pentamer_expression_group)
 fisher.test(ligands_nonhuman_d1$immunogenicity[ligands_nonhuman_d1$pentamer_expression_group %in% c(1,2)], ligands_nonhuman_d1$pentamer_expression_group[ligands_nonhuman_d1$pentamer_expression_group %in% c(1,2)])
 fisher.test(ligands_nonhuman_d1$immunogenicity[ligands_nonhuman_d1$pentamer_expression_group %in% c(2,3)], ligands_nonhuman_d1$pentamer_expression_group[ligands_nonhuman_d1$pentamer_expression_group %in% c(2,3)]) #OR were converted to 1/OR for Fig1D
 
-ligands_nonhuman_d1$thymopscore_group = cut(x = ligands_nonhuman_d1$thymopscore, breaks = quantile(ligands_nonhuman_d1$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+ligands_nonhuman_d1$thymopscore_group = cut(x = ligands_nonhuman_d1$thymopscore, breaks = quantile(ligands_nonhuman_d1$thymopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F) #Peptides were classified based on their TCEM’s thymoproteasomal cleavage scores.
 table(ligands_nonhuman_d1$thymopscore_group)
 fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$thymopscore_group)
 
-ligands_nonhuman_d1$immunopscore_group = cut(x = ligands_nonhuman_d1$immunopscore, breaks = quantile(ligands_nonhuman_d1$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
+ligands_nonhuman_d1$immunopscore_group = cut(x = ligands_nonhuman_d1$immunopscore, breaks = quantile(ligands_nonhuman_d1$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F) ##Peptides were classified based on their TCEM’s immunoproteasomal cleavage scores.
 table(ligands_nonhuman_d1$immunopscore_group)
 fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$immunopscore_group)
+rm(ligands_nonhuman_d1)
 
+
+#D2
 load("ligands_nonhuman_d2")
 ligands_nonhuman_d2$freqpenta_tcem_group = cut(x = ligands_nonhuman_d2$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d2$freqpenta_tcem),median(ligands_nonhuman_d2$freqpenta_tcem),max(ligands_nonhuman_d2$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman_d2$freqpenta_tcem_group)
@@ -338,7 +352,7 @@ fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$thymopscore_
 ligands_nonhuman_d2$immunopscore_group = cut(x = ligands_nonhuman_d2$immunopscore, breaks = quantile(ligands_nonhuman_d2$immunopscore,c(0,0.25,1),na.rm = T), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman_d2$immunopscore_group)
 fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$immunopscore_group)
-
+rm(ligands_nonhuman_d2)
 ```
 
 thymocutoff = 0.914470
@@ -508,7 +522,7 @@ Dataset 1 és 2
 
 ```{r}
 load("ligands_nonhuman_d1d2")
-ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), include.lowest = T, right = F)
+ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), include.lowest = T, right = F) #Peptides were classified based on their TCEM’s frequency in human proteins
 wilcox.test(bl62score ~ freqpenta_tcem_group, ligands_nonhuman)$p.value
 table(ligands_nonhuman$freqpenta_tcem_group)
 
@@ -533,6 +547,7 @@ fig3a = ggplot(ligands_nonhuman, aes(x = freqpenta_tcem_group, y = bl62score, co
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 fig3a
+
 rm(ligands_nonhuman)
 ```
 
@@ -541,27 +556,25 @@ rm(ligands_nonhuman)
 ```{r}
 load("ligands_nonhuman_d1d2")
 #hist(ligands_nonhuman$bl62score)
-ligands_nonhuman$bl62score_group = cut(ligands_nonhuman$bl62score, 25)
+ligands_nonhuman$bl62score_group = cut(ligands_nonhuman$bl62score, 25) #Peptides were stratified into 25 groups based on similarity
 table(ligands_nonhuman$bl62score_group)
 
-groups = aggregate(ligands_nonhuman$immunogenicity ~ ligands_nonhuman$bl62score_group, FUN = function(x)  {
+seqsimgroups = aggregate(ligands_nonhuman$immunogenicity ~ ligands_nonhuman$bl62score_group, FUN = function(x)  {
   temp = table(factor(x, levels = c("1", "0")))
   temp["1"]/temp["0"]
   })
-colnames(groups) = c("group_int", "immunogenicity")
-groups$group_int = as.character(groups$group_int)
-groups$group_mean = sapply(groups$group_int, function(x) {
+colnames(seqsimgroups) = c("group_int", "immunogenicity")
+seqsimgroups$group_int = as.character(seqsimgroups$group_int)
+seqsimgroups$group_mean = sapply(seqsimgroups$group_int, function(x) {
   mean(c(as.numeric(gsub("\\(", "", strsplit(as.character(x), ",")[[1]][1])), as.numeric(gsub("\\]", "", strsplit(as.character(x), ",")[[1]][2]))))
 })
-colorbg = data.frame(startlocx = c(.59, .72), 
-                        endlocx = c(.72, .89),
-                       col = c("#3C5488B2","#DC0000B2"))
+colorbg = data.frame(startlocx = c(.59, .72), endlocx = c(.72, .89), col = c("#3C5488B2","#DC0000B2"))
 
 fig3b = ggplot() + 
-  geom_point(data = groups, mapping = aes(group_mean, immunogenicity), size = 1) +
-  geom_smooth(mapping = aes(group_mean, immunogenicity), data = groups, se = F, linetype = "dashed", col = "black", size = 0.5, span = 0.4) +
+  geom_point(data = seqsimgroups, mapping = aes(group_mean, immunogenicity), size = 1) +
+  geom_smooth(mapping = aes(group_mean, immunogenicity), data = seqsimgroups, se = F, linetype = "dashed", col = "black", size = 0.5, span = 0.4) +
   geom_rect(data = colorbg, mapping = aes(xmin = startlocx, xmax = endlocx, ymin=0, ymax=2), fill = colorbg$col, alpha = 0.3) +
-  geom_vline(xintercept = groups$group_mean[which.max(groups$immunogenicity)], linetype = "dashed", color = "black") +
+  geom_vline(xintercept = seqsimgroups$group_mean[which.max(seqsimgroups$immunogenicity)], linetype = "dashed", color = "black") +
   labs(tag = "B", x = "Mean of sequence similarity values in the group", y = "Ratio of immunogenic and non-immunogenic peptides") +
   theme_bw() +
   theme(
@@ -576,11 +589,7 @@ fig3b = ggplot() +
     axis.line = element_line(colour = "black"))
 fig3b
 
-groups$group_mean[which.max(groups$immunogenicity)]
-cor.test(groups$group_mean[1:which.max(groups$immunogenicity)], groups$immunogenicity[1:which.max(groups$immunogenicity)], method = "spearman")
-cor.test(groups$group_mean[which.max(groups$immunogenicity):nrow(groups)], groups$immunogenicity[which.max(groups$immunogenicity):nrow(groups)], method = "spearman")
-
-rm(groups, ligands_nonhuman, colorbg)
+rm(seqsimgroups, ligands_nonhuman, colorbg)
 ```
 
 ##C COVID
@@ -739,7 +748,6 @@ rm(simmatrix, simmatrix_values, highsimperc)
 ##Combine
 
 ```{r}
-#library(multipanelfigure)
 fig4a = readPNG("main_plots_rs/Cross_reactivity_final.png")
 fig4a = rasterGrob(fig4a)
 
