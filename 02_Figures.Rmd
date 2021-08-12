@@ -158,7 +158,7 @@ ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(liga
 
 fig1_4 <- ggplot() + 
   geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 1,]) +
-  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 0,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Nonimmunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") + #cutoff values
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
@@ -192,7 +192,7 @@ ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(liga
 
 fig1_5 <- ggplot() + 
   geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman_d2[ligands_nonhuman_d2$immunogenicity == 1,]) +
-  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman_d2[ligands_nonhuman_d2$immunogenicity == 0,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Nonimmunogenic"), data = ligands_nonhuman_d2[ligands_nonhuman_d2$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
@@ -308,6 +308,7 @@ fig1 = grid.arrange(grobs = c(lapply(list(fig1_1, fig1_2, fig1_3), "+", margin12
                               lapply(list(fig1_45), "+", margin45), 
                               lapply(list(fig1_6, fig1_7), "+", margin12367)), layout_matrix = lay)
 #ggsave(fig1, filename = "Fig1.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+ggsave(fig1, filename = "D:/CloudStation/pentamer_project/PNAS_revision/main_plots_rs/Fig1_26.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
 ##Data calculation for Fig1D 
@@ -575,7 +576,7 @@ fig3b = ggplot() +
   geom_smooth(mapping = aes(group_mean, immunogenicity), data = seqsimgroups, se = F, linetype = "dashed", col = "black", size = 0.5, span = 0.4) +
   geom_rect(data = colorbg, mapping = aes(xmin = startlocx, xmax = endlocx, ymin=0, ymax=2), fill = colorbg$col, alpha = 0.3) +
   geom_vline(xintercept = seqsimgroups$group_mean[which.max(seqsimgroups$immunogenicity)], linetype = "dashed", color = "black") +
-  labs(tag = "B", x = "Mean of sequence similarity values in the group", y = "Ratio of immunogenic and non-immunogenic peptides") +
+  labs(tag = "B", x = "Mean of sequence similarity values in the group", y = "Ratio of immunogenic and nonimmunogenic peptides") +
   theme_bw() +
   theme(
     axis.title.x = element_text(size = 8),
@@ -595,7 +596,7 @@ rm(seqsimgroups, ligands_nonhuman, colorbg)
 ##C COVID
 
 ```{r}
-load("../objects/sars_cov_simil_to_balazs")
+load("D:/CloudStation/pentamer_project/objects/sars_cov_simil_to_balazs")
 sars_simil = data.frame(to_balazs, stringsAsFactors = F)
 rm(to_balazs)
 sars_simil$max_similarity_group = cut(sars_simil$max_similarity, breaks = c(min(sars_simil$max_similarity),median(sars_simil$max_similarity),max(sars_simil$max_similarity)), include.lowest = T)
@@ -633,6 +634,7 @@ lay = rbind(c(1,1,2,2,2,2,3,3),c(1,1,2,2,2,2,3,3))
 margin = theme(plot.margin = unit(c(.1,.1,.1,.3), "cm"))
 fig3 = grid.arrange(grobs = lapply(list(fig3a, fig3b, fig3c), "+", margin), layout_matrix = lay)
 #ggsave(fig3, filename = "Fig3.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+ggsave(fig3, filename = "D:/CloudStation/pentamer_project/PNAS_revision/main_plots_rs/Fig3_6.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 rm(lay, margin)
 ```
 
@@ -986,29 +988,27 @@ Sequences of T cell activating and non-activating epitopes have similar diversit
 ```{r}
 load("ligands_nonhuman_d2")
 
-#Not trigger
-pss_nt = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$immunogenicity == 0]), cores = 6, submat = "BLOSUM62")
-#save(pss_nt_d2, file = "objects/pss_nt_figs2")
+#Nonimmunogenic
+pss_nt = parSeqSim(protlist = as.list(ligands_nonhuman_d2$peptide[ligands_nonhuman_d2$immunogenicity == 0]), cores = 6, submat = "BLOSUM62") #It is a long-time running
 pss_nt_values = pss_nt[upper.tri(pss_nt)]
 l1 = length(pss_nt_values)
 
-#Trigger
-pss_t = parSeqSim(protlist = as.list(ligands_nonhuman$epitope[ligands_nonhuman$immunogenicity == 1]), cores = 6, submat = "BLOSUM62")
-#save(pss_t_d2, file = "objects/pss_t_d2")
+#Immunogenic
+pss_t = parSeqSim(protlist = as.list(ligands_nonhuman_d2$peptide[ligands_nonhuman_d2$immunogenicity == 1]), cores = 6, submat = "BLOSUM62") #It is a long-time running
 pss_t_values = pss_t[upper.tri(pss_t)]
 l2 = length(pss_t_values)
 
-pss = data.frame(nt = c(pss_nt_values, rep(NA, l2-l1)), t = pss_t_values)
+pss = data.frame(nonim = c(pss_nt_values, rep(NA, l2-l1)), im = pss_t_values)
+save(pss, file = "pss")
+rm(ligands_nonhuman_d2, pss_nt, pss_t, l1, l2, pss_nt_values, pss_t_values)
 
-#It is a long-time running
-Sys.time()
 figS2a <- ggplot(pss, aes(x=x)) +
   # Top
-  geom_density(aes(x = t, y = ..density..), fill = "#DC0000B2") +
+  geom_density(aes(x = im, y = ..density..), fill = "#DC0000B2") +
   geom_label(aes(x = 0.45, y = 4, label = "Immunogenic"), color = "#DC0000B2", size = 4) +
   # Bottom
-  geom_density(aes(x = nt, y = -..density..), fill = "#3C5488B2") +
-  geom_label(aes(x = 0.45, y = -4, label = "Non-immunogenic"), color = "#3C5488B2", size = 4) +
+  geom_density(aes(x = nonim, y = -..density..), fill = "#3C5488B2") +
+  geom_label(aes(x = 0.45, y = -4, label = "Nonimmunogenic"), color = "#3C5488B2", size = 4) +
   scale_y_continuous(breaks = c(-4,0,4), labels = c(4,0,4)) +
   labs(tag = "A", x = "BLOSUM62 similarity between peptides", y = "Density") +
   theme_bw() +
@@ -1022,8 +1022,8 @@ figS2a <- ggplot(pss, aes(x=x)) +
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
-figS2a
-Sys.time()
+#figS2a #It is a long-time running
+#save(figS2a, file = "figs2a")
 rm(pss)
 ```
 
@@ -1031,24 +1031,23 @@ rm(pss)
 
 ```{r}
 load("ligands_nonhuman_d2")
-ligands_nonhuman_ds_2 = ligands_nonhuman[nchar(ligands_nonhuman$epitope) == 9,]
-rm(ligands_nonhuman)
+ligands_nonhuman_d2 = ligands_nonhuman_d2[nchar(ligands_nonhuman_d2$peptide) == 9,]
 dropped_ep = readLines("dropped_eps_clo_d2.txt")
-load("objects/all_iedb")
+load("D:/CloudStation/pentamer_project/PNAS_revision/objects/all_iedb")
 
-length(unique(c(ligands_nonhuman_ds_2$epitope, dropped_ep[nchar(dropped_ep) == 9])))
-length(ligands_nonhuman_ds_2$epitope)
+length(unique(c(ligands_nonhuman_d2$peptide, dropped_ep[nchar(dropped_ep) == 9])))
+length(ligands_nonhuman_d2$peptide)
 
 #PEPTIDE
 categmtx_iedb_full = matrix(unlist(strsplit(all_iedb, "")), ncol = 9, byrow = T)
 categmtx_iedb_full = as.data.frame(categmtx_iedb_full)
-res_mca_full = MCA(categmtx_iedb_full ,graph = F)
+res_mca_full = MCA(categmtx_iedb_full, graph = F)
 rm(categmtx_iedb_full)
 df_iedb_full = as.data.frame(res_mca_full$ind$coord)
 rm(res_mca_full)
 colnames(df_iedb_full) = c("Dim1", "Dim2", "Dim3", "Dim4", "Dim5")
 
-df_full = rbind.data.frame(cbind.data.frame(df_iedb_full[!is.na(fmatch(all_iedb, c(ligands_nonhuman_ds_2$epitope, dropped_ep))),], group = "Full peptide - Before filtering"),cbind.data.frame(df_iedb_full[!is.na(fmatch(all_iedb, ligands_nonhuman_ds_2$epitope)),], group = "Full peptide - After filtering"))
+df_full = rbind.data.frame(cbind.data.frame(df_iedb_full[!is.na(fmatch(all_iedb, c(ligands_nonhuman_d2$peptide, dropped_ep))),], group = "Full peptide - Before filtering"),cbind.data.frame(df_iedb_full[!is.na(fmatch(all_iedb, ligands_nonhuman_d2$peptide)),], group = "Full peptide - After filtering"))
 rm(df_iedb_full)
 df_full$group = factor(df_full$group, levels = c("Full peptide - Before filtering", "Full peptide - After filtering"))
 table(df_full$group)
@@ -1081,19 +1080,19 @@ figS2b = ggplot(df_full, aes(x = Dim1, y = Dim2)) +
     strip.text = element_text(size = 7, color = "black"),
     legend.key.width = unit(.2,"cm"), 
     legend.key.height = unit(.3,"cm"))
-figS2b
+#figS2b
 
 #TCEM
 categmtx_iedb_tcem = matrix(unlist(strsplit(substr(all_iedb, 4, 8), "")), ncol = 5, byrow = T)
 categmtx_iedb_tcem = as.data.frame(categmtx_iedb_tcem)
-res_mca_tcem = MCA(categmtx_iedb_tcem ,graph = F)
+res_mca_tcem = MCA(categmtx_iedb_tcem, graph = F)
 rm(categmtx_iedb_tcem)
 df_iedb_tcem = as.data.frame(res_mca_tcem$ind$coord)
 rm(res_mca_tcem)
 colnames(df_iedb_tcem) = c("Dim1", "Dim2", "Dim3", "Dim4", "Dim5")
 
-df_tcem = rbind.data.frame(cbind.data.frame(df_iedb_tcem[!is.na(fmatch(all_iedb, c(ligands_nonhuman_ds_2$epitope, dropped_ep))),], group = "TCEM - Before filtering"), cbind.data.frame(df_iedb_tcem[!is.na(fmatch(all_iedb, ligands_nonhuman_ds_2$epitope)),], group = "TCEM - After filtering"))
-rm(df_iedb_tcem, all_iedb, ligands_nonhuman_ds_2, dropped_ep)
+df_tcem = rbind.data.frame(cbind.data.frame(df_iedb_tcem[!is.na(fmatch(all_iedb, c(ligands_nonhuman_d2$peptide, dropped_ep))),], group = "TCEM - Before filtering"), cbind.data.frame(df_iedb_tcem[!is.na(fmatch(all_iedb, ligands_nonhuman_d2$peptide)),], group = "TCEM - After filtering"))
+rm(df_iedb_tcem, all_iedb, ligands_nonhuman_d2, dropped_ep)
 df_tcem$group = factor(df_tcem$group, levels = c("TCEM - Before filtering", "TCEM - After filtering"))
 
 figS2c = ggplot(df_tcem, aes(x = Dim1, y = Dim2)) + 
@@ -1124,7 +1123,7 @@ figS2c = ggplot(df_tcem, aes(x = Dim1, y = Dim2)) +
     strip.text = element_text(size = 7, color = "black"),
     legend.key.width = unit(.2,"cm"), 
     legend.key.height = unit(.3,"cm"))
-figS2c
+#figS2c
 
 rm(df_full, df_tcem)
 ```
@@ -1137,6 +1136,7 @@ margin1 = theme(plot.margin = unit(c(.1,.1,.1,.1), "cm"))
 Sys.time()
 figS2 = grid.arrange(grobs = lapply(list(figS2a, figS2b, figS2c), "+", margin1), layout_matrix = lay)
 #ggsave(figS2, filename = "FigS2.png", width = 22, height = 13, units = "cm", dpi = "retina")
+ggsave(figS2, filename = "D:/CloudStation/pentamer_project/PNAS_revision/supp_plots_rs/FigS2_18.png", width = 22, height = 13, units = "cm", dpi = "retina")
 Sys.time()
 rm(lay, margin1)
 ```
@@ -1601,43 +1601,43 @@ load("ligands_nonhuman_d1")
 secanc_alleles = c("A0203","A0204","A0206","A0301","A2501","A2902","A6802",  
                    "B0801", "B1402","B1517", "B3701","B4601", 
                    "C0602","C0704", "C1502", "C1701")
-ligands_nonhuman$excluded = FALSE
-for(i in 1:nrow(ligands_nonhuman)) {
-  if(ligands_nonhuman$allele[i] %in% secanc_alleles) {
-    other_alleles = setdiff(activating$allele[activating$epitope == ligands_nonhuman$epitope[i]],ligands_nonhuman$allele[i])
+ligands_nonhuman_d1$excluded = FALSE
+for(i in 1:nrow(ligands_nonhuman_d1)) {
+  if(ligands_nonhuman_d1$allele[i] %in% secanc_alleles) {
+    other_alleles = setdiff(activating$allele[activating$peptide == ligands_nonhuman_d1$peptide[i]],ligands_nonhuman_d1$allele[i])
     if(length(other_alleles) == 0) {
-      ligands_nonhuman$excluded[i] = TRUE
+      ligands_nonhuman_d1$excluded[i] = TRUE
     } else if(length(other_alleles) > 0) {
       if(all(other_alleles %in% secanc_alleles)) {
-        ligands_nonhuman$excluded[i] = TRUE
+        ligands_nonhuman_d1$excluded[i] = TRUE
       }
     }
   }
 }
-table(ligands_nonhuman$excluded)
-ligands_nonhuman %<>% filter(excluded == FALSE)
-save(ligands_nonhuman, file = "ligands_nonhuman_d1_wosecanc")
-dataset_1 = cbind(ligands_nonhuman[,c("allele", "epitope", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
+table(ligands_nonhuman_d1$excluded)
+ligands_nonhuman_d1 %<>% filter(excluded == FALSE)
+save(ligands_nonhuman_d1, file = "ligands_nonhuman_d1_wosecanc")
+dataset_1 = cbind(ligands_nonhuman_d1[,c("allele", "peptide", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
 
 
 load("ligands_nonhuman_d2")
-ligands_nonhuman$excluded = FALSE
-for(i in 1:nrow(ligands_nonhuman)) {
-  if(ligands_nonhuman$allele[i] %in% secanc_alleles) {
-    other_alleles = setdiff(activating$allele[activating$epitope == ligands_nonhuman$epitope[i]],ligands_nonhuman$allele[i])
+ligands_nonhuman_d2$excluded = FALSE
+for(i in 1:nrow(ligands_nonhuman_d2)) {
+  if(ligands_nonhuman_d2$allele[i] %in% secanc_alleles) {
+    other_alleles = setdiff(activating$allele[activating$peptide == ligands_nonhuman_d2$peptide[i]],ligands_nonhuman_d2$allele[i])
     if(length(other_alleles) == 0) {
-      ligands_nonhuman$excluded[i] = TRUE
+      ligands_nonhuman_d2$excluded[i] = TRUE
     } else if(length(other_alleles) > 0) {
       if(all(other_alleles %in% secanc_alleles)) {
-        ligands_nonhuman$excluded[i] = TRUE
+        ligands_nonhuman_d2$excluded[i] = TRUE
       }
     }
   }
 }
-table(ligands_nonhuman$excluded)
-ligands_nonhuman %<>% filter(excluded == FALSE)
-save(ligands_nonhuman, file = "ligands_nonhuman_d2_wosecanc")
-dataset_2 = cbind(ligands_nonhuman[,c("allele", "epitope", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
+table(ligands_nonhuman_d2$excluded)
+ligands_nonhuman_d2 %<>% filter(excluded == FALSE)
+save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2_wosecanc")
+dataset_2 = cbind(ligands_nonhuman_d2[,c("allele", "peptide", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
 
 ligands_nonhuman = rbind(dataset_1, dataset_2)
 rm(dataset_1, dataset_2)
@@ -1694,10 +1694,10 @@ rm(ligands_nonhuman)
 
 ```{r}
 load("ligands_nonhuman_d1_wosecanc")
-ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-table(ligands_nonhuman$immunogenicity)
-ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
-plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$immunogenicity)
+ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
+table(ligands_nonhuman_d1$immunogenicity)
+ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression)
+plotdata = plsmo(x = ligands_nonhuman_d1$expperc, y = ligands_nonhuman_d1$immunogenicity)
 plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
 figS9_2 = ggplot(plotdata, aes(x, y)) + 
   geom_point(size = .2) +
@@ -1717,18 +1717,18 @@ figS9_2 = ggplot(plotdata, aes(x, y)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 figS9_2
-rm(ligands_nonhuman, plotdata)
+rm(ligands_nonhuman_d1, plotdata)
 ```
 
 ###Loess D2
 
 ```{r}
 load("ligands_nonhuman_d2_wosecanc")
-ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-table(ligands_nonhuman$immunogenicity)
-ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
+table(ligands_nonhuman_d2$immunogenicity)
+ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression)
 
-plotdata = plsmo(x = ligands_nonhuman$expperc, y = ligands_nonhuman$immunogenicity)
+plotdata = plsmo(x = ligands_nonhuman_d2$expperc, y = ligands_nonhuman_d2$immunogenicity)
 plotdata = data.frame(x = plotdata$`1`$x, y = plotdata$`1`$y)
 figS9_3 = ggplot(plotdata, aes(x, y)) + 
   geom_point(size = .2) +
@@ -1748,19 +1748,19 @@ figS9_3 = ggplot(plotdata, aes(x, y)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 figS9_3
-rm(ligands_nonhuman, plotdata)
+rm(ligands_nonhuman_d2, plotdata)
 ```
 
 ###Density
 
 ```{r}
 load("ligands_nonhuman_d1_wosecanc")
-ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression)
 
 figS9_4 <- ggplot() + 
-  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$immunogenicity == 1,]) +
-  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$immunogenicity == 0,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Nonimmunogenic"), data = ligands_nonhuman_d1[ligands_nonhuman_d1$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
@@ -1786,12 +1786,12 @@ figS9_4 <- ggplot() +
 figS9_4
 
 load("ligands_nonhuman_d2_wosecanc")
-ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
-ligands_nonhuman$expperc = ecdf(ligands_nonhuman$pentamer_expression)(ligands_nonhuman$pentamer_expression)
+ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
+ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression)
 
 figS9_5 <- ggplot() + 
-  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman[ligands_nonhuman$immunogenicity == 1,]) +
-  geom_density(mapping = aes(x = expperc, fill = "Non-immunogenic"), data = ligands_nonhuman[ligands_nonhuman$immunogenicity == 0,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Immunogenic"), data = ligands_nonhuman_d2[ligands_nonhuman_d2$immunogenicity == 1,]) +
+  geom_density(mapping = aes(x = expperc, fill = "Nonimmunogenic"), data = ligands_nonhuman_d2[ligands_nonhuman_d2$immunogenicity == 0,]) +
   coord_cartesian(ylim = c(.5,1.25), xlim = c(0,1)) +
   geom_vline(xintercept = c(.15,.75), linetype = "dashed") +
   scale_fill_manual(values = alpha(c("#DC0000B2","#3C5488B2"),.3)) +
@@ -1818,7 +1818,7 @@ figS9_5
 
 figS9_45 = ggarrange(figS9_4, figS9_5, ncol=2, common.legend = TRUE, legend = "top")
 figS9_45
-rm(figS9_4, figS9_5, ligands_nonhuman)
+rm(figS9_4, figS9_5, ligands_nonhuman_d1, ligands_nonhuman_d2)
 ```
 
 ##C Proteasomal cleavage
@@ -1905,6 +1905,7 @@ figS9 = grid.arrange(grobs = c(lapply(list(figS9_1, figS9_2, figS9_3), "+", marg
                               lapply(list(figS9_45), "+", margin45), 
                               lapply(list(figS9_6, figS9_7), "+", margin12367)), layout_matrix = lay)
 #ggsave(figS9, filename = "FigS9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+ggsave(figS9, filename = "D:/CloudStation/pentamer_project/PNAS_revision/supp_plots_rs/FigS9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
 ##Data calculation for FigS9D
@@ -1954,7 +1955,7 @@ fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$immunopscore
 chowell = read.delim("Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #9888
 load("ligands_nonhuman_d1d2")
 chowell = chowell[chowell$dissimilarity > 0,] #4263
-chowell = chowell[is.na(fmatch(chowell$nmer, ligands_nonhuman$epitope)),] #3430
+chowell = chowell[is.na(fmatch(chowell$nmer, ligands_nonhuman$peptide)),] #3430
 rm(ligands_nonhuman)
 chowell$group = cut(chowell$dissimilarity, breaks = unique(quantile(chowell$dissimilarity, seq(0,1,0.04))), include.lowest = T, ordered_result = T)
 table(chowell$group, chowell$Immunogenicity)
@@ -2007,7 +2008,7 @@ figS10 = ggplot(groups, aes(group_num, ratio)) +
   scale_x_continuous(breaks = groups$group_num, labels = figxlab) +
   geom_smooth(method = NULL, se = F, linetype = "dashed", col = "black", size = 0.5, span = 0.6) +
   geom_vline(xintercept = groups$group_num[wm], linetype = "dashed", color = "red") +
-  labs(x = "Dissimilarity value range of groups", y = "Ratio of immunogenic and non-immunogenic peptides") +
+  labs(x = "Dissimilarity value range of groups", y = "Ratio of immunogenic and nonimmunogenic peptides") +
   annotate(geom = "text", x = 5, y = 12, color = "black", size = 2, label = "paste(italic(rho), \" = 0.82, \", italic(P), \" = 2 x \", 10 ^ -4)", parse = TRUE) +
   annotate(geom = "text", x = 20, y = 17, color = "black", size = 2, label = "paste(italic(rho), \" = -0.62, \", italic(P), \" = 0.04\")", parse = TRUE) +
   theme_bw() +
@@ -2022,6 +2023,7 @@ figS10 = ggplot(groups, aes(group_num, ratio)) +
     axis.line = element_line(colour = "black"))
 figS10
 #ggsave(figS10, filename = "figS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
+ggsave(figS10, filename = "D:/CloudStation/pentamer_project/PNAS_revision/supp_plots_rs/figS10_2.png", width = 11, height = 11, units = "cm", dpi = "retina")
 rm(chowell, groups, b, b_exp, wm)
 ```
 
