@@ -717,7 +717,7 @@ rm(auc,df,perf,pred,tbl)
 ##D
 
 ```{r}
-load("crossreact/simmatrix_nimtcems43")
+load("D:/CloudStation/pentamer_project/PNAS_revision/crossreact/simmatrix_nimtcems43")
 simmatrix_values = data.frame(value = as.numeric(simmatrix))
 
 fig4d = ggplot(simmatrix_values, aes(x = value)) + 
