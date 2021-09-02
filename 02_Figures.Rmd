@@ -362,7 +362,7 @@ thymocutoff = 0.914470
 ##A TCEM
 
 ```{r}
-load("../articleplots_objects/stat_individual")
+load("../articleplots_objects/stat_individual") #githubra megy
 
 df_tcemfreq = data.frame(fraction = c(stat_individual[,"tcemfreq_0_3"], (stat_individual[,"tcell_tcemfreq_4_7"] + stat_individual[,"tcell_tcemfreq_8_inf"]) / (stat_individual[,"bound_tcemfreq_4_7"] + stat_individual[,"bound_tcemfreq_8_inf"])), group = rep(c("0-3","4-"), each = nrow(stat_individual)), IDs = rep(rownames(stat_individual), 2))
 
@@ -646,7 +646,7 @@ aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AA
   sum(mtx[cbind(fmatch(unlist(strsplit(seq_1, "")), aas), fmatch(unlist(strsplit(seq_2, "")), aas))])
 }
 
-tbl = read.delim("../crossreact/FIMMUN.txt", stringsAsFactors = F)
+tbl = read.delim("../crossreact/FIMMUN.txt", stringsAsFactors = F) #github
 tbl = tbl[tbl$id != "background",]
 tbl$median = apply(tbl[,4:6], 1, FUN = function(x) median(x, na.rm = T))
 tbl$TCEM = substr(tbl$peptide, 4, 8)
@@ -717,7 +717,62 @@ rm(auc,df,perf,pred,tbl)
 ##D
 
 ```{r}
-load("D:/CloudStation/pentamer_project/PNAS_revision/crossreact/simmatrix_nimtcems43")
+library(fastmatch)
+library(pbapply)
+library(parallel)
+
+aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AABLOSUM62)) {
+  sum(mtx[cbind(fmatch(unlist(strsplit(seq_1, "")), aas), fmatch(unlist(strsplit(seq_2, "")), aas))])
+}
+
+load("ligands_nonhuman_d1d2")
+ligands_nonhuman$group = 0
+ligands_nonhuman$group[ligands_nonhuman$freqpenta_tcem < 4 & ligands_nonhuman$pentamer_expression < quantile(ligands_nonhuman$pentamer_expression,0.15,na.rm = T) & ligands_nonhuman$thymopscore < quantile(ligands_nonhuman$thymopscore,0.25,na.rm = T)] = 1
+ligands_nonhuman$group[ligands_nonhuman$freqpenta_tcem >= 4 & (ligands_nonhuman$pentamer_expression >= quantile(ligands_nonhuman$pentamer_expression,0.15,na.rm = T) & ligands_nonhuman$pentamer_expression <= quantile(ligands_nonhuman$pentamer_expression,0.75,na.rm = T)) & ligands_nonhuman$thymopscore > quantile(ligands_nonhuman$thymopscore,0.25,na.rm = T)] = 2
+table(ligands_nonhuman$group)
+
+#1 - it is the least likely to find specific positively selected T cells in the repertoire
+nptcemsd12 = unique(unname(ligands_nonhuman[ligands_nonhuman$group == 1 & ligands_nonhuman$immunogenicity == 0,"tcem"])) #it is the least likely to find specific positively selected T cells in the repertoire
+nptcemsd12_self = sapply(nptcemsd12, FUN = function(s) aLign(s, s))
+
+#2 - we expected to find specific T cells in the repertoire
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem")
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem")
+exprmeds = pbsapply(expr_list, function(x) median(x))
+rm(expr_list)
+exprcutoff = c(0.203075,1.095007)
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_tpr_normalized_with_division_median_two_sides")
+thymomeds = pbsapply(score_list, function(x) median(x))
+rm(score_list)
+thymocutoff = 0.914470
+keeptcems = names(pentamerfreq_tcem)[!is.na(exprmeds) & !is.na(thymomeds)]
+pentamerfreq_tcem = pentamerfreq_tcem[keeptcems]
+exprmeds = exprmeds[keeptcems]
+thymomeds = thymomeds[keeptcems]
+
+imtcems = names(pentamerfreq_tcem)[pentamerfreq_tcem > 3 & exprmeds >= exprcutoff[1] & exprmeds <= exprcutoff[2] & thymomeds >= thymocutoff] #we expected to find specific T cells in the repertoire
+rm(exprcutoff, exprmeds, keeptcems, pentamerfreq_tcem, thymocutoff, thymomeds, ligands_nonhuman)
+imtcems_self = sapply(imtcems, FUN = function(s) aLign(s, s))
+
+#Calculate similarity values
+no_cores = detectCores()-1
+c1 = makeCluster(no_cores)
+simmatrix = matrix(NA, nrow = length(imtcems), ncol = length(nptcemsd12), dimnames = list(imtcems,nptcemsd12))
+
+for(s in nptcemsd12) {
+  ind = fmatch(s,nptcemsd12)
+  print(ind)
+  print(Sys.time())
+  clusterExport(c1, c("imtcems", "aLign", "imtcems_self", "nptcemsd12_self", "fmatch", "s"))
+  simmatrix[,ind] = parSapply(cl = c1, X = imtcems, FUN = function(z) {
+    aLign(s, z)/(sqrt(nptcemsd12_self[s]*imtcems_self[z]))
+  })
+}
+rm(s, ind)
+stopCluster(c1)
+rm(c1)
+
+
 simmatrix_values = data.frame(value = as.numeric(simmatrix))
 
 fig4d = ggplot(simmatrix_values, aes(x = value)) + 
@@ -762,7 +817,7 @@ fig4 = grid.arrange(fig4a, fig4b, fig4c, fig4d, nrow = 2, ncol = 2)
 
 ```{r}
 #"UP000464024" = "sarsvov2"
-species = list.files("../objects/uniprot_proteomes_hla_binding/eps/")
+species = list.files("../objects/uniprot_proteomes_hla_binding/eps/") #mendeley, egyes proteomokban jelenlevo nonamereket tartalmazza
 load("../objects/pentamerfreq_tcem")
 load("../objects/score_list_tpr_normalized_with_division_median_two_sides")
 load("../objects/expr_list_tcem")
@@ -795,9 +850,9 @@ fract %<>%
   transform(ratio = as.numeric(ratio))
 
 #Add species name to fract
-load("../articleplots_objects/results_for_heatmaps")
+load("D:/CloudStation/pentamer_project/articleplots_objects/results_for_heatmaps")
 alleles = sort(unique(res$alleles))
-load("../articleplots_objects/results_for_heatmaps_medians_locspec_sarsexpr_033_sarsthymo_025_previous_corrected.jpg")
+load("D:/CloudStation/pentamer_project/articleplots_objects/results_for_heatmaps_medians_locspec_sarsexpr_033_sarsthymo_025_previous_corrected.jpg") #github
 res %<>% 
   dplyr::rename(species_full_name = species_name, uniprot_id = species) %>% 
   transform(uniprot_id = ifelse(uniprot_id == "sarscov2", "UP000464024", uniprot_id)) %>% 
@@ -1218,7 +1273,7 @@ rm(tcems)
 #FigS4 - MS ROC
 
 ```{r}
-load("ms_data_corrected2")
+load("ms_data_corrected2") #Mendeley
 load("../objects/pentamerfreq_tcem")
 seqs_tcem = unique(ms_data$tcem[nchar(ms_data$Sequence) %in% c(9,10)]) #153,456
 pentamerfreq_tcem_roc = data.frame(tcem = names(pentamerfreq_tcem), freq = unname(pentamerfreq_tcem), group = 0)
@@ -1499,7 +1554,7 @@ load("ligands_nonhuman_d1")
 
 ligands_nonhuman_d1$immunogenicity = as.numeric(as.character(ligands_nonhuman_d1$immunogenicity))
 ##Hydrophobicity index - Kyte & Doolittle
-load("hydro_indices")
+load("hydro_indices") #githubra
 ligands_nonhuman_d1$hydrophobicity =  unname(sapply(ligands_nonhuman_d1$tcem, function(x) {median(as.numeric(hydro_indices[strsplit(x, "")[[1]]]))}))
 
 ##Create expression group and drop NAs
@@ -1655,7 +1710,7 @@ save(ligands_nonhuman, file = "ligands_nonhuman_d1d2_wosecanc") #3930
 ##A TCEM frequency
 
 ```{r}
-load("ligands_nonhuman_d1d2_wosecanc")
+load("ligands_nonhuman_d1d2_wosecanc") #githubra
 wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
 wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
@@ -1952,10 +2007,10 @@ fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$immunopscore
 #FigS10 Chowell
 
 ```{r}
-chowell = read.delim("Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #9888
+chowell = read.delim("Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #githubra
 load("ligands_nonhuman_d1d2")
-chowell = chowell[chowell$dissimilarity > 0,] #4263
-chowell = chowell[is.na(fmatch(chowell$nmer, ligands_nonhuman$peptide)),] #3430
+chowell = chowell[chowell$dissimilarity > 0,]
+chowell = chowell[is.na(fmatch(chowell$nmer, ligands_nonhuman$peptide)),]
 rm(ligands_nonhuman)
 chowell$group = cut(chowell$dissimilarity, breaks = unique(quantile(chowell$dissimilarity, seq(0,1,0.04))), include.lowest = T, ordered_result = T)
 table(chowell$group, chowell$Immunogenicity)
@@ -2035,7 +2090,7 @@ aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AA
 }
 
 #A6
-tbl = read.delim("../crossreact/A6_position_depletion_matrix.csv", sep = ",", stringsAsFactors = F)
+tbl = read.delim("../crossreact/A6_position_depletion_matrix.csv", sep = ",", stringsAsFactors = F) #githubra
 peptide = paste0(tbl$amino_acid[tbl$annotation == "target"], collapse = "")
 tbl$sequence = apply(tbl, 1, FUN = function(x) {
   seq = peptide
