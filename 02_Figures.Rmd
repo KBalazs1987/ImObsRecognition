@@ -11,7 +11,7 @@ output:
 #Setup
 
 ```{r}
-setwd("D:/CloudStation/mygit/ImObsRecognition/")
+#setwd("D:/ImObsRecognition/") #set your working directory
 library(scales)
 library(ggsci)
 library(ggplot2)
@@ -49,7 +49,7 @@ rm(mypal)
 ##A TCEM frequency
 
 ```{r}
-load("ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2") #github
 wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
 wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 table(ligands_nonhuman$group)
@@ -87,7 +87,7 @@ rm(ligands_nonhuman)
 ###Loess D1 (upper plot)
 
 ```{r}
-load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d1") #github
 ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman_d1$immunogenicity)
 ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression) #gene expression values were transformed by calculating their percentile rank
@@ -119,7 +119,7 @@ rm(ligands_nonhuman_d1, plotdata)
 ###Loess D2 (upper plot)
 
 ```{r}
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman_d2$immunogenicity)
 ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression) #gene expression values were transformed by calculating their percentile rank
@@ -152,7 +152,7 @@ rm(ligands_nonhuman_d2, plotdata)
 
 ```{r}
 #D1
-load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d1") #github
 ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression) #gene expression values were transformed by calculating their percentile rank
 
@@ -186,7 +186,7 @@ rm(ligands_nonhuman_d1)
 
 ###############
 #D2
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression) #gene expression values were transformed by calculating their percentile rank
 
@@ -227,7 +227,7 @@ rm(fig1_4, fig1_5, ligands_nonhuman_d2)
 ###Thymoproteasome
 
 ```{r}
-load("ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2") #github
 ligands_nonhuman %<>% filter(!is.na(thymopscore))
 table(ligands_nonhuman$group)
 wilcox.test(thymopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
@@ -264,7 +264,7 @@ rm(ligands_nonhuman)
 ###Immunoproteasome
 
 ```{r}
-load("ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2") #github
 ligands_nonhuman %<>% filter(!is.na(immunopscore))
 table(ligands_nonhuman$group)
 wilcox.test(immunopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
@@ -308,14 +308,14 @@ fig1 = grid.arrange(grobs = c(lapply(list(fig1_1, fig1_2, fig1_3), "+", margin12
                               lapply(list(fig1_45), "+", margin45), 
                               lapply(list(fig1_6, fig1_7), "+", margin12367)), layout_matrix = lay)
 #ggsave(fig1, filename = "Fig1.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
-ggsave(fig1, filename = "D:/CloudStation/pentamer_project/PNAS_revision/main_plots_rs/Fig1_26.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
+#ggsave(fig1, filename = "D:/Fig1.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
 ##Data calculation for Fig1D 
 
 ```{r}
 #D1
-load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d1") #github
 ligands_nonhuman_d1$freqpenta_tcem_group = cut(x = ligands_nonhuman_d1$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d1$freqpenta_tcem),median(ligands_nonhuman_d1$freqpenta_tcem),max(ligands_nonhuman_d1$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #Peptides were classified based on their TCEM’s frequency in human proteins
 table(ligands_nonhuman_d1$freqpenta_tcem_group)
 fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$freqpenta_tcem_group)
@@ -336,7 +336,7 @@ rm(ligands_nonhuman_d1)
 
 
 #D2
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 ligands_nonhuman_d2$freqpenta_tcem_group = cut(x = ligands_nonhuman_d2$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d2$freqpenta_tcem),median(ligands_nonhuman_d2$freqpenta_tcem),max(ligands_nonhuman_d2$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman_d2$freqpenta_tcem_group)
 fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$freqpenta_tcem_group)
@@ -522,7 +522,7 @@ rm(lay, margin)
 Dataset 1 és 2
 
 ```{r}
-load("ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2") #github
 ligands_nonhuman$freqpenta_tcem_group = cut(x = ligands_nonhuman$freqpenta_tcem, breaks = c(min(ligands_nonhuman$freqpenta_tcem),median(ligands_nonhuman$freqpenta_tcem),max(ligands_nonhuman$freqpenta_tcem)), include.lowest = T, right = F) #Peptides were classified based on their TCEM’s frequency in human proteins
 wilcox.test(bl62score ~ freqpenta_tcem_group, ligands_nonhuman)$p.value
 table(ligands_nonhuman$freqpenta_tcem_group)
@@ -555,10 +555,8 @@ rm(ligands_nonhuman)
 ##B Similarity - D1,D2
 
 ```{r}
-load("ligands_nonhuman_d1d2")
-#hist(ligands_nonhuman$bl62score)
+load("ligands_nonhuman_d1d2") #github
 ligands_nonhuman$bl62score_group = cut(ligands_nonhuman$bl62score, 25) #Peptides were stratified into 25 groups based on similarity
-table(ligands_nonhuman$bl62score_group)
 
 seqsimgroups = aggregate(ligands_nonhuman$immunogenicity ~ ligands_nonhuman$bl62score_group, FUN = function(x)  {
   temp = table(factor(x, levels = c("1", "0")))
@@ -596,7 +594,7 @@ rm(seqsimgroups, ligands_nonhuman, colorbg)
 ##C COVID
 
 ```{r}
-load("D:/CloudStation/pentamer_project/objects/sars_cov_simil_to_balazs")
+load("sars_cov_similarity") #github
 sars_simil = data.frame(to_balazs, stringsAsFactors = F)
 rm(to_balazs)
 sars_simil$max_similarity_group = cut(sars_simil$max_similarity, breaks = c(min(sars_simil$max_similarity),median(sars_simil$max_similarity),max(sars_simil$max_similarity)), include.lowest = T)
@@ -634,7 +632,6 @@ lay = rbind(c(1,1,2,2,2,2,3,3),c(1,1,2,2,2,2,3,3))
 margin = theme(plot.margin = unit(c(.1,.1,.1,.3), "cm"))
 fig3 = grid.arrange(grobs = lapply(list(fig3a, fig3b, fig3c), "+", margin), layout_matrix = lay)
 #ggsave(fig3, filename = "Fig3.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
-ggsave(fig3, filename = "D:/CloudStation/pentamer_project/PNAS_revision/main_plots_rs/Fig3_6.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 rm(lay, margin)
 ```
 
@@ -646,7 +643,7 @@ aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AA
   sum(mtx[cbind(fmatch(unlist(strsplit(seq_1, "")), aas), fmatch(unlist(strsplit(seq_2, "")), aas))])
 }
 
-tbl = read.delim("../crossreact/FIMMUN.txt", stringsAsFactors = F) #github
+tbl = read.delim("FIMMUN.txt", stringsAsFactors = F) #github
 tbl = tbl[tbl$id != "background",]
 tbl$median = apply(tbl[,4:6], 1, FUN = function(x) median(x, na.rm = T))
 tbl$TCEM = substr(tbl$peptide, 4, 8)
@@ -725,7 +722,7 @@ aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AA
   sum(mtx[cbind(fmatch(unlist(strsplit(seq_1, "")), aas), fmatch(unlist(strsplit(seq_2, "")), aas))])
 }
 
-load("ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2") #github
 ligands_nonhuman$group = 0
 ligands_nonhuman$group[ligands_nonhuman$freqpenta_tcem < 4 & ligands_nonhuman$pentamer_expression < quantile(ligands_nonhuman$pentamer_expression,0.15,na.rm = T) & ligands_nonhuman$thymopscore < quantile(ligands_nonhuman$thymopscore,0.25,na.rm = T)] = 1
 ligands_nonhuman$group[ligands_nonhuman$freqpenta_tcem >= 4 & (ligands_nonhuman$pentamer_expression >= quantile(ligands_nonhuman$pentamer_expression,0.15,na.rm = T) & ligands_nonhuman$pentamer_expression <= quantile(ligands_nonhuman$pentamer_expression,0.75,na.rm = T)) & ligands_nonhuman$thymopscore > quantile(ligands_nonhuman$thymopscore,0.25,na.rm = T)] = 2
@@ -736,12 +733,12 @@ nptcemsd12 = unique(unname(ligands_nonhuman[ligands_nonhuman$group == 1 & ligand
 nptcemsd12_self = sapply(nptcemsd12, FUN = function(s) aLign(s, s))
 
 #2 - we expected to find specific T cells in the repertoire
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem")
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem")
+load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+load("expr_list_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 exprmeds = pbsapply(expr_list, function(x) median(x))
 rm(expr_list)
 exprcutoff = c(0.203075,1.095007)
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_tpr_normalized_with_division_median_two_sides")
+load("tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 thymomeds = pbsapply(score_list, function(x) median(x))
 rm(score_list)
 thymocutoff = 0.914470
@@ -771,7 +768,6 @@ for(s in nptcemsd12) {
 rm(s, ind)
 stopCluster(c1)
 rm(c1)
-
 
 simmatrix_values = data.frame(value = as.numeric(simmatrix))
 
@@ -805,7 +801,7 @@ rm(simmatrix, simmatrix_values, highsimperc)
 ##Combine
 
 ```{r}
-fig4a = readPNG("main_plots_rs/Cross_reactivity_final.png")
+fig4a = readPNG("Cross_reactivity_final.png") #github
 fig4a = rasterGrob(fig4a)
 
 fig4 = grid.arrange(fig4a, fig4b, fig4c, fig4d, nrow = 2, ncol = 2)
@@ -817,10 +813,10 @@ fig4 = grid.arrange(fig4a, fig4b, fig4c, fig4d, nrow = 2, ncol = 2)
 
 ```{r}
 #"UP000464024" = "sarsvov2"
-species = list.files("../objects/uniprot_proteomes_hla_binding/eps/") #mendeley, egyes proteomokban jelenlevo nonamereket tartalmazza
-load("../objects/pentamerfreq_tcem")
-load("../objects/score_list_tpr_normalized_with_division_median_two_sides")
-load("../objects/expr_list_tcem")
+species = list.files("pathogen_9mers/") #files can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1), 9-mers from each pathogen proteome
+load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+load("tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+load("expr_list_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 exprmedians = sapply(expr_list, FUN = function(x) median(x))
 thymomedians = sapply(score_list, FUN = function(x) median(x))
 
@@ -828,7 +824,7 @@ exprcutoff = 0.203075
 thymocutoff = 0.914470
 
 fract = t(sapply(species, FUN = function(x) {
-  load(paste0("../objects/uniprot_proteomes_hla_binding/eps/", x))
+  load(paste0("pathogen_9mers/", x))
   tcems = substr(eps, 4, 8)
   tcemfreq = pentamerfreq_tcem[fmatch(tcems, names(pentamerfreq_tcem))]
   tcemexpr = exprmedians[fmatch(tcems, names(exprmedians))]
@@ -850,9 +846,8 @@ fract %<>%
   transform(ratio = as.numeric(ratio))
 
 #Add species name to fract
-load("D:/CloudStation/pentamer_project/articleplots_objects/results_for_heatmaps")
-alleles = sort(unique(res$alleles))
-load("D:/CloudStation/pentamer_project/articleplots_objects/results_for_heatmaps_medians_locspec_sarsexpr_033_sarsthymo_025_previous_corrected.jpg") #github
+load("alleles_for_heatmap") #github
+load("np_tcems_hla_pathogens") #github
 res %<>% 
   dplyr::rename(species_full_name = species_name, uniprot_id = species) %>% 
   transform(uniprot_id = ifelse(uniprot_id == "sarscov2", "UP000464024", uniprot_id)) %>% 
@@ -875,7 +870,7 @@ res %<>%
 fract$species = res$species[fmatch(fract$uniprot_id,res$uniprot_id)]
 
 fract$lengthofprot = sapply(fract$uniprot_id, function(x) {
-  load(paste0("../objects/uniprot_proteomes_hla_binding/eps/", x))
+  load(paste0("pathogen_9mers/", x))
   length(eps)
 })
 fract %<>% 
@@ -895,16 +890,16 @@ rm(i,j,alleles,species)
 min(heatmapmtx)
 max(heatmapmtx, na.rm = T)
 
-save(fract, file = "../articleplots_objects/pathogen_fract")
-save(heatmapmtx,file = "../articleplots_objects/pathogen_heatmapmtx")
-save(res, file = "../articleplots_objects/pathogen_res")
+# save(fract, file = "pathogen_fract")
+# save(heatmapmtx,file = "pathogen_heatmapmtx")
+# save(res, file = "pathogen_res")
 ```
 
 
 ##A Barchart
 
 ```{r}
-load("D:/CloudStation/pentamer_project/articleplots_objects/pathogen_fract")
+load("pathogen_fract") #github
 fract %<>% mutate(ratio_conv = ratio - 0.5)
 
 #PLOT
@@ -936,7 +931,7 @@ rm(fract)
 ##B Heatmap
 
 ```{r}
-load("D:/CloudStation/pentamer_project/articleplots_objects/pathogen_heatmapmtx")
+load("pathogen_heatmapmtx") #github
 fig5b_ch = Heatmap(matrix = heatmapmtx,
                    col = colorRampPalette(c("#3C5488B2", "white", "#DC0000B2"))(10),
                    rect_gp = gpar(col = "grey60", lwd = .5),
@@ -961,7 +956,7 @@ rm(heatmapmtx, fig5b_ch)
 ##C Dotplot
 
 ```{r}
-load("D:/CloudStation/pentamer_project/articleplots_objects/pathogen_fract")
+load("pathogen_fract") #github
 
 fig5c = ggplot(fract, aes(x = species, y = variance)) + 
   geom_point(size = 1.5) +
@@ -989,7 +984,7 @@ rm(fract)
 ##D Protective and susceptible alleles
 
 ```{r}
-load("../articleplots_objects/groups_sars_extended_expr_33_thymo_25.jpg")
+load("infection_risk_HLA") #github
 dfps = as.data.frame(groups, stringsAsFactors = F)
 colnames(dfps) = c("Pathogen", "allele", "association", "value")
 dfps$value = as.numeric(dfps$value)
@@ -1041,7 +1036,7 @@ fig5 = grid.arrange(grobs = list(fig5a,fig5b,fig5c,fig5d), layout_matrix = lay)
 Sequences of T cell activating and non-activating epitopes have similar diversity and amino acid constitution.
 
 ```{r}
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 
 #Nonimmunogenic
 pss_nt = parSeqSim(protlist = as.list(ligands_nonhuman_d2$peptide[ligands_nonhuman_d2$immunogenicity == 0]), cores = 6, submat = "BLOSUM62") #It is a long-time running
@@ -1054,9 +1049,10 @@ pss_t_values = pss_t[upper.tri(pss_t)]
 l2 = length(pss_t_values)
 
 pss = data.frame(nonim = c(pss_nt_values, rep(NA, l2-l1)), im = pss_t_values)
-save(pss, file = "pss")
+#save(pss, file = "pss")
 rm(ligands_nonhuman_d2, pss_nt, pss_t, l1, l2, pss_nt_values, pss_t_values)
 
+load("pss") #github
 figS2a <- ggplot(pss, aes(x=x)) +
   # Top
   geom_density(aes(x = im, y = ..density..), fill = "#DC0000B2") +
@@ -1085,10 +1081,10 @@ rm(pss)
 ##MCA plot
 
 ```{r}
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 ligands_nonhuman_d2 = ligands_nonhuman_d2[nchar(ligands_nonhuman_d2$peptide) == 9,]
-dropped_ep = readLines("dropped_eps_clo_d2.txt")
-load("D:/CloudStation/pentamer_project/PNAS_revision/objects/all_iedb")
+dropped_ep = readLines("dropped_eps_clo_d2.txt") #github
+load("all_iedb") #github
 
 length(unique(c(ligands_nonhuman_d2$peptide, dropped_ep[nchar(dropped_ep) == 9])))
 length(ligands_nonhuman_d2$peptide)
@@ -1191,7 +1187,6 @@ margin1 = theme(plot.margin = unit(c(.1,.1,.1,.1), "cm"))
 Sys.time()
 figS2 = grid.arrange(grobs = lapply(list(figS2a, figS2b, figS2c), "+", margin1), layout_matrix = lay)
 #ggsave(figS2, filename = "FigS2.png", width = 22, height = 13, units = "cm", dpi = "retina")
-ggsave(figS2, filename = "D:/CloudStation/pentamer_project/PNAS_revision/supp_plots_rs/FigS2_18.png", width = 22, height = 13, units = "cm", dpi = "retina")
 Sys.time()
 rm(lay, margin1)
 ```
@@ -1201,21 +1196,21 @@ frequency distribution in the human proteome
 ##Object
 
 ```{r}
-load("objects/ligands_nonhuman_d1")
+load("objects/ligands_nonhuman_d1") #github
 tcems_d1 = ligands_nonhuman %>%
   select(tcem, freqpenta_tcem) %>%
   arrange(freqpenta_tcem) %>%
   unique() %>%
   mutate(tcemsource = "Dataset 1")
 
-load("objects/ligands_nonhuman_d2")
+load("objects/ligands_nonhuman_d2") #github
 tcems_d2 = ligands_nonhuman %>%
   select(tcem, freqpenta_tcem) %>%
   arrange(freqpenta_tcem) %>%
   unique() %>%
   mutate(tcemsource = "Dataset 2")
 
-load("../objects/pentamerfreq_tcem")
+load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 tcems_all = data.frame(tcem = names(pentamerfreq_tcem), 
                        freqpenta_tcem = unname(pentamerfreq_tcem), 
                        tcemsource = "All possible TCEMs")
@@ -1224,14 +1219,10 @@ tcems = tcems_d1 %>%
   union(tcems_d2) %>%
   union(tcems_all)
 tcems$tcemsource = factor(tcems$tcemsource, levels = c("Dataset 1","Dataset 2","All possible TCEMs"))
-save(tcems, file = "objects/tcems")
+#save(tcems, file = "tcems")
 rm(ligands_nonhuman, tcems_d1, tcems_d2, tcems_all, pentamerfreq_tcem)
-```
 
-##Plot
-
-```{r}
-load("objects/tcems")
+#PLOT
 table(tcems$tcemsource)
 
 summary(tcems$freqpenta_tcem[tcems$tcemsource == "Dataset 1"])
@@ -1273,8 +1264,8 @@ rm(tcems)
 #FigS4 - MS ROC
 
 ```{r}
-load("ms_data_corrected2") #Mendeley
-load("../objects/pentamerfreq_tcem")
+load("ms_data_corrected2") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 seqs_tcem = unique(ms_data$tcem[nchar(ms_data$Sequence) %in% c(9,10)]) #153,456
 pentamerfreq_tcem_roc = data.frame(tcem = names(pentamerfreq_tcem), freq = unname(pentamerfreq_tcem), group = 0)
 pentamerfreq_tcem_roc$group[pentamerfreq_tcem_roc$tcem %in% seqs_tcem] = 1
@@ -1356,7 +1347,7 @@ figs4_ms = grid.arrange(grobs = c(lapply(list(figs_ms_1), "+", margin1),
 #FigS5 - Housekeeping ratio
 
 ```{r}
-load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d1") #github
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 nb_of_groups = 20
 
@@ -1388,7 +1379,7 @@ figS5a
 rm(ligands_nonhuman, tempdf)
 
 #D2
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$pentamer_expression_group = cut(ligands_nonhuman$pentamer_expression, unique(quantile(ligands_nonhuman$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
 table(ligands_nonhuman$pentamer_expression_group)
@@ -1425,7 +1416,7 @@ figS5 = grid.arrange(grobs = list(figS5a, figS5b), ncol = 2)
 #FigS7 logreg, Table S1
 
 ```{r}
-load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d1") #github
 ligands_nonhuman_d1$immunogenicity = as.numeric(as.character(ligands_nonhuman_d1$immunogenicity))
 ligands_nonhuman_d1$pentamer_expression_group = cut(x = ligands_nonhuman_d1$pentamer_expression, breaks = c(min(ligands_nonhuman_d1$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d1$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d1$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman_d1$pentamer_expression_group)
@@ -1440,7 +1431,7 @@ ligands_nonhuman_d1 %<>%
 
 modelglm = glm(formula = immunogenicity ~ log_freqpenta_tcem, family = "binomial", data = ligands_nonhuman_d1)
 summary(modelglm)
-save(modelglm, file = "glm_d1/m1")
+#save(modelglm, file = "glm_d1/m1")
 
 modelglm = glm(formula = immunogenicity ~ pentamer_expression_group2, family = "binomial", data = ligands_nonhuman_d1)
 summary(modelglm)
@@ -1486,7 +1477,7 @@ rm(modelglm, modelglm1, tempanova, i)
 
 #####
 
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 ligands_nonhuman_d2$immunogenicity = as.numeric(as.character(ligands_nonhuman_d2$immunogenicity))
 ligands_nonhuman_d2$pentamer_expression_group = cut(x = ligands_nonhuman_d2$pentamer_expression, breaks = c(min(ligands_nonhuman_d2$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d2$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d2$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman_d2$pentamer_expression_group)
@@ -1501,7 +1492,7 @@ ligands_nonhuman_d2 %<>%
 
 modelglm = glm(formula = immunogenicity ~ log_freqpenta_tcem, family = "binomial", data = ligands_nonhuman_d2)
 summary(modelglm)
-save(modelglm, file = "glm_d2/m1")
+#save(modelglm, file = "glm_d2/m1")
 
 modelglm = glm(formula = immunogenicity ~ pentamer_expression_group2, family = "binomial", data = ligands_nonhuman_d2)
 summary(modelglm)
@@ -1550,11 +1541,11 @@ rm(modelglm, modelglm1, tempanova, i)
 ##D1
 
 ```{r}
-load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d1") #github
 
 ligands_nonhuman_d1$immunogenicity = as.numeric(as.character(ligands_nonhuman_d1$immunogenicity))
 ##Hydrophobicity index - Kyte & Doolittle
-load("hydro_indices") #githubra
+load("hydro_indices") #github
 ligands_nonhuman_d1$hydrophobicity =  unname(sapply(ligands_nonhuman_d1$tcem, function(x) {median(as.numeric(hydro_indices[strsplit(x, "")[[1]]]))}))
 
 ##Create expression group and drop NAs
@@ -1597,10 +1588,10 @@ fig_forest_d1
 ##D2
 
 ```{r}
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 ligands_nonhuman_d2$immunogenicity = as.numeric(as.character(ligands_nonhuman_d2$immunogenicity))
 ##Hydrophobicity index - Kyte & Doolittle
-load("hydro_indices")
+load("hydro_indices") #github
 ligands_nonhuman_d2$hydrophobicity =  unname(sapply(ligands_nonhuman_d2$tcem, function(x) {median(as.numeric(hydro_indices[strsplit(x, "")[[1]]]))}))
 
 ligands_nonhuman_d2$pentamer_expression_group = cut(x = ligands_nonhuman_d2$pentamer_expression, breaks = c(min(ligands_nonhuman_d2$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d2$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d2$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
@@ -1649,8 +1640,8 @@ fig_forest= grid.arrange(textGrob("Dataset 1"), fig_forest_d1, textGrob("Dataset
 ##Create datasets
 
 ```{r}
-load("activating_d1")
-load("ligands_nonhuman_d1")
+load("activating_d1") #github
+load("ligands_nonhuman_d1") #github
 #drop those peptides which occur exclusively with alleles containing secondary anchor residues in TCEM position
 #"A2902"
 secanc_alleles = c("A0203","A0204","A0206","A0301","A2501","A2902","A6802",  
@@ -1671,11 +1662,11 @@ for(i in 1:nrow(ligands_nonhuman_d1)) {
 }
 table(ligands_nonhuman_d1$excluded)
 ligands_nonhuman_d1 %<>% filter(excluded == FALSE)
-save(ligands_nonhuman_d1, file = "ligands_nonhuman_d1_wosecanc")
+#save(ligands_nonhuman_d1, file = "ligands_nonhuman_d1_wosecanc")
 dataset_1 = cbind(ligands_nonhuman_d1[,c("allele", "peptide", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d1")
 
 
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 ligands_nonhuman_d2$excluded = FALSE
 for(i in 1:nrow(ligands_nonhuman_d2)) {
   if(ligands_nonhuman_d2$allele[i] %in% secanc_alleles) {
@@ -1691,7 +1682,7 @@ for(i in 1:nrow(ligands_nonhuman_d2)) {
 }
 table(ligands_nonhuman_d2$excluded)
 ligands_nonhuman_d2 %<>% filter(excluded == FALSE)
-save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2_wosecanc")
+#save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2_wosecanc")
 dataset_2 = cbind(ligands_nonhuman_d2[,c("allele", "peptide", "immunogenicity", "tcem", "freqpenta_tcem", "pentamer_expression", "thymopscore", "immunopscore", "bl62score", "housekeeping_ratio")], dataset = "d2")
 
 ligands_nonhuman = rbind(dataset_1, dataset_2)
@@ -1704,13 +1695,13 @@ ligands_nonhuman %<>%
     .$dataset == "d2" & .$immunogenicity == 1 ~ "d2_im",
   )) %>% 
   transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
-save(ligands_nonhuman, file = "ligands_nonhuman_d1d2_wosecanc") #3930
+#save(ligands_nonhuman, file = "ligands_nonhuman_d1d2_wosecanc") #3930
 ```
 
 ##A TCEM frequency
 
 ```{r}
-load("ligands_nonhuman_d1d2_wosecanc") #githubra
+load("ligands_nonhuman_d1d2_wosecanc") #github
 wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
 wilcox.test(freqpenta_tcem ~ immunogenicity, subset(ligands_nonhuman, dataset == "d2"))
 
@@ -1748,7 +1739,7 @@ rm(ligands_nonhuman)
 ###Loess D1
 
 ```{r}
-load("ligands_nonhuman_d1_wosecanc")
+load("ligands_nonhuman_d1_wosecanc") #github
 ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman_d1$immunogenicity)
 ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression)
@@ -1778,7 +1769,7 @@ rm(ligands_nonhuman_d1, plotdata)
 ###Loess D2
 
 ```{r}
-load("ligands_nonhuman_d2_wosecanc")
+load("ligands_nonhuman_d2_wosecanc") #github
 ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
 table(ligands_nonhuman_d2$immunogenicity)
 ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression)
@@ -1809,7 +1800,7 @@ rm(ligands_nonhuman_d2, plotdata)
 ###Density
 
 ```{r}
-load("ligands_nonhuman_d1_wosecanc")
+load("ligands_nonhuman_d1_wosecanc") #github
 ligands_nonhuman_d1 %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman_d1$expperc = ecdf(ligands_nonhuman_d1$pentamer_expression)(ligands_nonhuman_d1$pentamer_expression)
 
@@ -1840,7 +1831,7 @@ figS9_4 <- ggplot() +
     axis.line = element_line(colour = "black"))
 figS9_4
 
-load("ligands_nonhuman_d2_wosecanc")
+load("ligands_nonhuman_d2_wosecanc") #github
 ligands_nonhuman_d2 %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman_d2$expperc = ecdf(ligands_nonhuman_d2$pentamer_expression)(ligands_nonhuman_d2$pentamer_expression)
 
@@ -1880,7 +1871,7 @@ rm(figS9_4, figS9_5, ligands_nonhuman_d1, ligands_nonhuman_d2)
 ###Thymoproteasome
 
 ```{r}
-load("ligands_nonhuman_d1d2_wosecanc")
+load("ligands_nonhuman_d1d2_wosecanc") #github
 ligands_nonhuman %<>% filter(!is.na(thymopscore))
 table(ligands_nonhuman$group)
 wilcox.test(thymopscore ~ immunogenicity, subset(ligands_nonhuman, dataset == "d1"))
@@ -1916,7 +1907,7 @@ rm(ligands_nonhuman)
 ###Immunoproteasome
 
 ```{r}
-load("ligands_nonhuman_d1d2_wosecanc")
+load("ligands_nonhuman_d1d2_wosecanc") #github
 ligands_nonhuman %<>% filter(!is.na(immunopscore))
 table(ligands_nonhuman$group)
 
@@ -1960,13 +1951,12 @@ figS9 = grid.arrange(grobs = c(lapply(list(figS9_1, figS9_2, figS9_3), "+", marg
                               lapply(list(figS9_45), "+", margin45), 
                               lapply(list(figS9_6, figS9_7), "+", margin12367)), layout_matrix = lay)
 #ggsave(figS9, filename = "FigS9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
-ggsave(figS9, filename = "D:/CloudStation/pentamer_project/PNAS_revision/supp_plots_rs/FigS9.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
 ##Data calculation for FigS9D
 
 ```{r}
-load("ligands_nonhuman_d1_wosecanc")
+load("ligands_nonhuman_d1_wosecanc") #github
 ligands_nonhuman_d1$freqpenta_tcem_group = cut(x = ligands_nonhuman_d1$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d1$freqpenta_tcem),median(ligands_nonhuman_d1$freqpenta_tcem),max(ligands_nonhuman_d1$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman_d1$freqpenta_tcem_group)
 fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$freqpenta_tcem_group)
@@ -1984,7 +1974,7 @@ ligands_nonhuman_d1$immunopscore_group = cut(x = ligands_nonhuman_d1$immunopscor
 table(ligands_nonhuman_d1$immunopscore_group)
 fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$immunopscore_group)
 
-load("ligands_nonhuman_d2_wosecanc")
+load("ligands_nonhuman_d2_wosecanc") #github
 ligands_nonhuman_d2$freqpenta_tcem_group = cut(x = ligands_nonhuman_d2$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d2$freqpenta_tcem),median(ligands_nonhuman_d2$freqpenta_tcem),max(ligands_nonhuman_d2$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman_d2$freqpenta_tcem_group)
 fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$freqpenta_tcem_group)
@@ -2007,8 +1997,8 @@ fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$immunopscore
 #FigS10 Chowell
 
 ```{r}
-chowell = read.delim("Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #githubra
-load("ligands_nonhuman_d1d2")
+chowell = read.delim("Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #github
+load("ligands_nonhuman_d1d2") #github
 chowell = chowell[chowell$dissimilarity > 0,]
 chowell = chowell[is.na(fmatch(chowell$nmer, ligands_nonhuman$peptide)),]
 rm(ligands_nonhuman)
@@ -2078,7 +2068,6 @@ figS10 = ggplot(groups, aes(group_num, ratio)) +
     axis.line = element_line(colour = "black"))
 figS10
 #ggsave(figS10, filename = "figS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
-ggsave(figS10, filename = "D:/CloudStation/pentamer_project/PNAS_revision/supp_plots_rs/figS10_2.png", width = 11, height = 11, units = "cm", dpi = "retina")
 rm(chowell, groups, b, b_exp, wm)
 ```
 
@@ -2090,7 +2079,7 @@ aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AA
 }
 
 #A6
-tbl = read.delim("../crossreact/A6_position_depletion_matrix.csv", sep = ",", stringsAsFactors = F) #githubra
+tbl = read.delim("A6_position_depletion_matrix.csv", sep = ",", stringsAsFactors = F) #github
 peptide = paste0(tbl$amino_acid[tbl$annotation == "target"], collapse = "")
 tbl$sequence = apply(tbl, 1, FUN = function(x) {
   seq = peptide
@@ -2163,14 +2152,14 @@ rm(auc, df, perf, pred, tbl, aLign)
 
 #COMBINE
 figs11 = grid.arrange(grobs = list(figs11a,figs11b), ncol = 2)
-ggsave(figs11, filename = "FigS11.png", width = 22, height = 11, units = "cm", dpi = "retina")
+#ggsave(figs11, filename = "FigS11.png", width = 22, height = 11, units = "cm", dpi = "retina")
 ```
 
 #Table S2 - Fishers
 ##D1
 
 ```{r}
-load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d1") #github
 
 #TCEMFREQ
 dataset = ligands_nonhuman_d1
@@ -2227,7 +2216,7 @@ fisher.test(dataset$group, dataset$immunogenicity)
 ##D2
 
 ```{r}
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #github
 
 #TCEMFREQ
 dataset = ligands_nonhuman_d2
@@ -2284,13 +2273,13 @@ fisher.test(dataset$group, dataset$immunogenicity)
 #Table S3 Aminosav
 
 ```{r}
-proteome = readFASTA("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta")
+proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 aafreq = as.data.frame(Table(unlist(strsplit(unlist(proteome, use.names = F), ""), use.names = F)) / length(unlist(strsplit(unlist(proteome, use.names = F), ""), use.names = F)))
 colnames(aafreq) = "freq_in_human_proteome"
 rm(proteome)
 aafreq["U",]
 
-load("ligands_nonhuman_d1d2")
+load("ligands_nonhuman_d1d2") #github
 aacomp_nim = ligands_nonhuman %>% filter(immunogenicity == 0) %>% pull(tcem) %>% strsplit(split = "") %>% unlist(use.names = F) %>% factor(levels = rownames(AABLOSUM62)) %>% table() %>% as.numeric()
 aacomp_im = ligands_nonhuman %>% filter(immunogenicity == 1) %>% pull(tcem) %>% strsplit(split = "") %>% unlist(use.names = F) %>% factor(levels = rownames(AABLOSUM62)) %>% table() %>% as.numeric()
 aacomp = data.frame(aa = rownames(AABLOSUM62), nim = aacomp_nim, im = aacomp_im)
