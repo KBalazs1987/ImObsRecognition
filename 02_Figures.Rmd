@@ -595,8 +595,8 @@ rm(seqsimgroups, ligands_nonhuman, colorbg)
 
 ```{r}
 load("sars_cov_similarity") #github
-sars_simil = data.frame(to_balazs, stringsAsFactors = F)
-rm(to_balazs)
+sars_simil = data.frame(sars_cov_similarity, stringsAsFactors = F)
+rm(sars_cov_similarity)
 sars_simil$max_similarity_group = cut(sars_simil$max_similarity, breaks = c(min(sars_simil$max_similarity),median(sars_simil$max_similarity),max(sars_simil$max_similarity)), include.lowest = T)
 wilcox.test(number_of_indiv ~ max_similarity_group, sars_simil)
 table(sars_simil$max_similarity_group)
