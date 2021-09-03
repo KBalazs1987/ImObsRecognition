@@ -7,7 +7,7 @@ output: html_document
 #Setup
 
 ```{r include=FALSE}
-setwd("D:/CloudStation/mygit/ImObsRecognition/")
+#setwd("D:/ImObsRecognition/") #set your working directory
 library(dplyr)
 library(magrittr)
 library(pbapply)
@@ -25,7 +25,7 @@ elérési utak törlése
 ##T cell activation assays
 
 ```{r}
-tcell_full = fread("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tcell_full_v3.csv", skip = 1) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+tcell_full = fread("tcell_full_v3.csv", skip = 1) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 tcell_full = tcell_full[,c(125,12,1,11,106)]
 colnames(tcell_full) = c("allele", "peptide", "assay", "object_type", "qualitative_measure")
 
@@ -58,7 +58,7 @@ Predicting HLA-binding with NetMHCpan-4.0. Selecting pairs with either < 500 nM 
 < 2% binding rank percentile
 
 ```{r eval=FALSE, include=FALSE}
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/binding_matrix") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+load("binding_matrix") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 rownames(binding_matrix$aff) = gsub("HLA-|:", "", rownames(binding_matrix$aff))
 rownames(binding_matrix$rp) = gsub("HLA-|:", "", rownames(binding_matrix$rp))
 activating$aff = apply(activating,1,function(x) ifelse(x[1] %in% rownames(binding_matrix$aff), binding_matrix$aff[x[1],x[2]], NA))
@@ -82,7 +82,7 @@ ligands_raw_d1 %<>%
 Keeping pairs, if the peptide was not found in the reference human proteome
 
 ```{r}
-proteome = readFASTA("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 tempdf = ligands_raw_d1 %>% dplyr::select(peptide) %>% unique()
 tempdf$human = pbsapply(tempdf$peptide, function(z) any(stri_detect_fixed(proteome, z))) #TRUE - human, FALSE - nonhuman
 table(tempdf$human) #Human: 827, nonhuman: 4,462
@@ -107,7 +107,7 @@ length(unique(ligands_raw_d1$peptide[duplicated(ligands_raw_d1$peptide)])) #95
 #ligands_raw_d1 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
 drop_peps = ligands_raw_d1 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #13 peptides/95
 #writeLines(drop_peps, "01out/dropped_peptides.txt")
-ligands_raw_d1 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 4,089 #comment: false value on FigS1
+ligands_raw_d1 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 4,089 #comment: wrong value on FigS1
 rm(drop_peps)
 ```
 
@@ -129,10 +129,10 @@ ligands_raw_d1$immunogenicity = factor(ligands_raw_d1$immunogenicity, levels = c
 ```
 
 #Dataset 2 assembly
-##Binding assays
+##Binding assays from IEDB
 
 ```{r}
-mhc_ligand_full = fread("D:/CloudStation/mygit_EXT/ImObsRecognition//objects/mhc_ligand_full.csv", skip = 1) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+mhc_ligand_full = fread("mhc_ligand_full.csv", skip = 1) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 mhc_ligand_full = mhc_ligand_full[,c(96,12,1,11,84)]
 colnames(mhc_ligand_full) = c("allele", "peptide", "assay", "object_type", "qualitative_measure")
 
@@ -187,7 +187,7 @@ ligands_raw_d2 %<>%
 Keeping pairs, if the peptide was not found in the reference human proteome
 
 ```{r}
-proteome = readFASTA("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 tempdf = ligands_raw_d2 %>% dplyr::select(peptide) %>% unique()
 tempdf$human = pbsapply(tempdf$peptide, function(z) any(stri_detect_fixed(proteome, z))) #TRUE - human, FALSE - nonhuman
 table(tempdf$human) #Human: 187, nonhuman: 1,282
@@ -210,7 +210,7 @@ table(ligands_raw_d2$immunogenicity) #0 - 485; 1 - 632
 length(unique(ligands_raw_d2$peptide[duplicated(ligands_raw_d2$peptide)]))
 #ligands_raw_d2 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
 drop_peps = ligands_raw_d2 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #1 peptide: YAQMWSLMY
-ligands_raw_d2 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 1,115
+ligands_raw_d2 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 1,115 #comment: wrong value on FigS1
 rm(drop_peps)
 ```
 
@@ -233,12 +233,13 @@ ligands_raw_d2$immunogenicity = factor(ligands_raw_d2$immunogenicity, levels = c
 
 #Step 8 right branch in FigS1
 Excluding similar peptides using an iterative method
+You have to download and install clustal omega from http://www.clustal.org/omega/#Download
 
 ```{r}
 clomega <- function(epitopes, similarity) {
   strings = as.vector(rbind(paste0(">", epitopes), epitopes))
   writeLines(strings, "epitopes.fasta")
-  system("\"C:\\Users\\User\\Downloads\\clustal-omega-1.2.2-win64\\clustalo.exe\" -i epitopes.fasta -o out_epitopes.fasta -v --distmat-out=dist.txt --threads=8 --full --force")
+  system("\"C:\\Users\\User\\Downloads\\clustal-omega-1.2.2-win64\\clustalo.exe\" -i epitopes.fasta -o out_epitopes.fasta -v --distmat-out=dist.txt --threads=8 --full --force") #set the location of clustal omega
   distmtx = try(readLines("dist.txt"))
   maximum = max(nchar(distmtx))
   distmtx = subset(distmtx, nchar(distmtx) == maximum)
@@ -266,7 +267,7 @@ clomega <- function(epitopes, similarity) {
 
 dist_matr = clomega(epitopes = ligands_raw_d2$peptide, similarity = 0.5)
 ligands_raw_d2 %>% filter(!peptide %in% rownames(dist_matr)) %>% pull(peptide) -> dropped_eps_clo_d2 #452 peptides
-writeLines(dropped_eps_clo_d2, "dropped_eps_clo_d2.txt")
+#writeLines(dropped_eps_clo_d2, "dropped_eps_clo_d2.txt")
 rm(dropped_peps_clo)
 
 ligands_nonhuman_d2 = ligands_raw_d2 %<>% 
@@ -287,7 +288,7 @@ rm(ligands_raw_d1, ligands_raw_d2)
 #Pentamer frequency
 
 ```{r}
-proteome = readFASTA("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta")
+proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 nonamers = sapply(proteome, function(x) substring(x, 1:(nchar(x)-8), 9:nchar(x)))
 nonamers = unlist(nonamers, use.names = F)
 nonamers = nonamers[nchar(nonamers) == 9]
@@ -304,14 +305,15 @@ names(zerofreqs) = setdiff(pentamers, names(pfreqs))
 pentamerfreq_tcem = c(pfreqs, zerofreqs)
 pentamerfreq_tcem = pentamerfreq_tcem[pentamers]
 
-save(pentamerfreq_tcem, file = "D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem") #feltölteni
+#save(pentamerfreq_tcem, file = "pentamerfreq_tcem")
 ```
 
 
 #Sequence similarity
+You have to download and install blast from https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 
 ```{r}
-source("D:/CloudStation/mygit_EXT/ImObsRecognition/sequence_similarity_func.R") #githubra
+source("sequence_similarity_func.R") #github
 create_db_proteome(blast_folder = "C:/NCBI/blast-2.11.0+/bin/", 
                    proteome_fasta_loc = "D:/CloudStation/mygit_EXT/ImObsRecognition/objects/uniprot-proteome_UP000005640+reviewed_yes.fasta", 
                    peptide_length = 9, 
@@ -344,30 +346,30 @@ bl62score = c(bl62score_nonamers, bl62score_dekamers)
 ```{r}
 ##TCEM frequency
 ligands_nonhuman_d1$tcem = unname(pbsapply(ligands_nonhuman_d1$peptide, function(x) ifelse(nchar(x) == 9, substr(x,4,8), substr(x,5,9))))
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem") #Mendeley
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem") ##the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d1$freqpenta_tcem = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) pentamerfreq_tcem[fmatch(x, names(pentamerfreq_tcem))]))
 rm(pentamerfreq_tcem)
 
 ##Expression
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem") #Mendeley
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem") ##the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d1$pentamer_expression = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) median(expr_list[[fmatch(x, names(expr_list))]])))
 rm(expr_list)
 
 ##Çleavage scores
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_tpr_normalized_with_division_median_two_sides") #Mendeley
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tpr_score") ##the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d1$thymopscore = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) median(score_list[[fmatch(x, names(score_list))]])))
 
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_ipr_normalized_with_division_median_two_sides") #Mendeley
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/ipr_score") ##the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d1$immunopscore = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) median(score_list[[fmatch(x, names(score_list))]])))
 rm(score_list)
 
 #Blosum62 similarity score
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/bl62score") #Mendeley
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/bl62score") ##the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d1$bl62score = unname(bl62score[match(ligands_nonhuman_d1$peptide, names(bl62score))])
 rm(bl62score)
 
 #Housekeeping ratio
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tcem_housekeeping_stat") #Mendeley
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tcem_housekeeping_stat") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 elements_housekeeping %<>% 
   as.data.frame(stringsAsFactors = F) %>% 
   mutate_at(2:3, as.numeric)
@@ -376,34 +378,34 @@ rm(elements_housekeeping)
 
 ligands_nonhuman_d1 %<>% 
   select(allele, peptide, immunogenicity, tcem, freqpenta_tcem, pentamer_expression, thymopscore, immunopscore, bl62score, housekeeping_ratio)
-save(ligands_nonhuman_d1, file = "ligands_nonhuman_d1") #Mendeley
+#save(ligands_nonhuman_d1, file = "ligands_nonhuman_d1")
 
 ##TCEM frequency
 ligands_nonhuman_d2$tcem = unname(pbsapply(ligands_nonhuman_d2$peptide, function(x) ifelse(nchar(x) == 9, substr(x,4,8), substr(x,5,9))))
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem")
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d2$freqpenta_tcem = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) pentamerfreq_tcem[fmatch(x, names(pentamerfreq_tcem))]))
 rm(pentamerfreq_tcem)
 
 ##Expression
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem")
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/expr_list_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d2$pentamer_expression = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) median(expr_list[[fmatch(x, names(expr_list))]])))
 rm(expr_list)
 
 ##Çleavage scores
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_tpr_normalized_with_division_median_two_sides")
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d2$thymopscore = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) median(score_list[[fmatch(x, names(score_list))]])))
 
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/score_list_ipr_normalized_with_division_median_two_sides")
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/ipr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d2$immunopscore = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) median(score_list[[fmatch(x, names(score_list))]])))
 rm(score_list)
 
 #Blosum62 similarity score
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/bl62score")
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/bl62score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d2$bl62score = unname(bl62score[match(ligands_nonhuman_d2$peptide, names(bl62score))])
 rm(bl62score)
 
 #Housekeeping ratio
-load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tcem_housekeeping_stat")
+load("D:/CloudStation/mygit_EXT/ImObsRecognition/objects/tcem_housekeeping_stat") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 elements_housekeeping %<>% 
   as.data.frame(stringsAsFactors = F) %>% 
   mutate_at(2:3, as.numeric)
@@ -412,12 +414,12 @@ rm(elements_housekeeping)
 
 ligands_nonhuman_d2 %<>% 
   select(allele, peptide, immunogenicity, tcem, freqpenta_tcem, pentamer_expression, thymopscore, immunopscore, bl62score, housekeeping_ratio)
-save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2") #Mendeley
+#save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2")
 
 #D1 & D2
-load("ligands_nonhuman_d1")
+load("ligands_nonhuman_d1") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d1 = cbind(ligands_nonhuman_d1, dataset = "d1")
-load("ligands_nonhuman_d2")
+load("ligands_nonhuman_d2") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ligands_nonhuman_d2 = cbind(ligands_nonhuman_d2, dataset = "d2")
 ligands_nonhuman = rbind(ligands_nonhuman_d1, ligands_nonhuman_d2)
 rm(ligands_nonhuman_d1, ligands_nonhuman_d2)
@@ -429,6 +431,6 @@ ligands_nonhuman %<>%
     .$dataset == "d2" & .$immunogenicity == 1 ~ "d2_im",
   )) %>% 
   transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
-save(ligands_nonhuman, file = "ligands_nonhuman_d1d2") #Mendeley
+#save(ligands_nonhuman, file = "ligands_nonhuman_d1d2")
 ```
 
