@@ -107,7 +107,7 @@ length(unique(ligands_raw_d1$peptide[duplicated(ligands_raw_d1$peptide)])) #95
 #ligands_raw_d1 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
 drop_peps = ligands_raw_d1 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #13 peptides/95
 #writeLines(drop_peps, "01out/dropped_peptides.txt")
-ligands_raw_d1 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 4,089 #comment: wrong value on FigS1
+ligands_raw_d1 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 4,089
 rm(drop_peps)
 ```
 
@@ -210,7 +210,7 @@ table(ligands_raw_d2$immunogenicity) #0 - 485; 1 - 632
 length(unique(ligands_raw_d2$peptide[duplicated(ligands_raw_d2$peptide)]))
 #ligands_raw_d2 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
 drop_peps = ligands_raw_d2 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #1 peptide: YAQMWSLMY
-ligands_raw_d2 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 1,115 #comment: wrong value on FigS1
+ligands_raw_d2 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 1,115
 rm(drop_peps)
 ```
 
