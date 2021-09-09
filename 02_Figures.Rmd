@@ -362,9 +362,8 @@ thymocutoff = 0.914470
 ##A TCEM
 
 ```{r}
-load("../articleplots_objects/stat_individual") #githubra megy
-
-df_tcemfreq = data.frame(fraction = c(stat_individual[,"tcemfreq_0_3"], (stat_individual[,"tcell_tcemfreq_4_7"] + stat_individual[,"tcell_tcemfreq_8_inf"]) / (stat_individual[,"bound_tcemfreq_4_7"] + stat_individual[,"bound_tcemfreq_8_inf"])), group = rep(c("0-3","4-"), each = nrow(stat_individual)), IDs = rep(rownames(stat_individual), 2))
+load("stat_individual") #github
+df_tcemfreq = data.frame(fraction = c(stat_individual[,"tcemfreq_0_3"], stat_individual[,"tcemfreq_4_inf"]), group = rep(c("0-3","4-"), each = nrow(stat_individual)), IDs = rep(rownames(stat_individual), 2))
 
 wilcox.test(df_tcemfreq$fraction[df_tcemfreq$group == "0-3"], df_tcemfreq$fraction[df_tcemfreq$group == "4-"], paired = T)$p.value
 
@@ -399,7 +398,6 @@ rm(df_tcemfreq, stat_individual)
 
 ```{r}
 load("../articleplots_objects/stat_individual")
-
 df_tcemexpr = data.frame(fraction = c(stat_individual[,"expr_1st_tertile"], stat_individual[,"expr_2nd_tertile"], stat_individual[,"expr_3rd_tertile"]), group = factor(rep(c("Low","Medium","High"), each = nrow(stat_individual)), levels = c("Low", "Medium", "High")), IDs = rep(rownames(stat_individual), 3))
 
 wilcox.test(df_tcemexpr$fraction[df_tcemexpr$group == "Low"], df_tcemexpr$fraction[df_tcemexpr$group == "Medium"], paired = T)$p.value
@@ -437,7 +435,6 @@ rm(df_tcemexpr, stat_individual)
 
 ```{r}
 load("../articleplots_objects/stat_individual")
-
 df_thymo = data.frame(fraction = c(stat_individual[,"thymo_1st_tertile"], (stat_individual[,"tcell_tcemthymo_2nd_tertile"] + stat_individual[,"tcell_tcemthymo_3rd_tertile"]) / (stat_individual[,"bound_tcemthymo_2nd_tertile"] + stat_individual[,"bound_tcemthymo_3rd_tertile"])), group = factor(rep(c("Low","High"), each = nrow(stat_individual)), levels = c("Low", "High")), IDs = rep(rownames(stat_individual), 2))
 
 wilcox.test(df_thymo$fraction[df_thymo$group == "Low"], df_thymo$fraction[df_thymo$group == "High"], paired = T)$p.value
@@ -473,7 +470,6 @@ rm(df_thymo, stat_individual)
 
 ```{r}
 load("../articleplots_objects/stat_individual")
-
 df_immuno = data.frame(fraction = c(stat_individual[,"immuno_1st_tertile"], (stat_individual[,"tcell_tcemimmuno_2nd_tertile"] + stat_individual[,"tcell_tcemimmuno_3rd_tertile"]) / (stat_individual[,"bound_tcemimmuno_2nd_tertile"] + stat_individual[,"bound_tcemimmuno_3rd_tertile"])), group = factor(rep(c("Low","High"), each = nrow(stat_individual)), levels = c("Low", "High")), IDs = rep(rownames(stat_individual), 2))
 
 wilcox.test(df_immuno$fraction[df_immuno$group == "Low"], df_immuno$fraction[df_immuno$group == "High"], paired = T)$p.value
