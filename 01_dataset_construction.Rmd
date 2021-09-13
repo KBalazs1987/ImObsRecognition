@@ -305,8 +305,6 @@ names(zerofreqs) = setdiff(pentamers, names(pfreqs))
 
 pentamerfreq_tcem = c(pfreqs, zerofreqs)
 pentamerfreq_tcem = pentamerfreq_tcem[pentamers]
-
-#save(pentamerfreq_tcem, file = "pentamerfreq_tcem")
 ```
 
 #Sequence similarity

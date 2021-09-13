@@ -43,7 +43,8 @@ pal_npg("nrc", alpha = 0.7)(9) #"#E64B35B2" "#4DBBD5B2" "#00A087B2" "#3C5488B2" 
 ```
 
 #Fig1
-##A TCEM frequency
+Peptide immunogenicity is influenced by TCEM frequency in human proteins (A), TCEM expression in cTECs (B) and TCEM presentation on cTECs (C).
+##A
 
 ```{r}
 load("ligands_nonhuman_d1d2") #the file can be downloaded from github
@@ -80,8 +81,8 @@ fig1_1
 rm(ligands_nonhuman)
 ```
 
-##B Expression
-###Loess D1 (upper plot)
+##B
+Loess D1 (upper plot)
 
 ```{r}
 load("ligands_nonhuman_d1") #the file can be downloaded from github
@@ -113,7 +114,7 @@ fig1_2
 rm(ligands_nonhuman_d1, plotdata)
 ```
 
-###Loess D2 (upper plot)
+Loess D2 (upper plot)
 
 ```{r}
 load("ligands_nonhuman_d2") #the file can be downloaded from github
@@ -145,7 +146,7 @@ fig1_3
 rm(ligands_nonhuman_d2, plotdata)
 ```
 
-###Density (lower plots)
+Density (lower plots)
 
 ```{r}
 #D1
@@ -220,8 +221,8 @@ fig1_45
 rm(fig1_4, fig1_5, ligands_nonhuman_d2)
 ```
 
-##C Proteasomal cleavage
-###Thymoproteasome
+##C
+Thymoproteasome
 
 ```{r}
 load("ligands_nonhuman_d1d2") #the file can be downloaded from github
@@ -258,7 +259,7 @@ fig1_6
 rm(ligands_nonhuman)
 ```
 
-###Immunoproteasome
+Immunoproteasome
 
 ```{r}
 load("ligands_nonhuman_d1d2") #the file can be downloaded from github
@@ -295,7 +296,7 @@ fig1_7
 rm(ligands_nonhuman)
 ```
 
-##COMBINE
+##Fusion
 
 ```{r}
 lay = cbind(c(1,1,1,1),c(1,1,1,1),c(1,1,1,1),c(2,2,4,4),c(2,2,4,4),c(2,2,4,4),c(2,2,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(5,5,5,5),c(5,5,5,5),c(5,5,5,5),c(6,6,6,6),c(6,6,6,6),c(6,6,6,6))
@@ -305,13 +306,12 @@ fig1 = grid.arrange(grobs = c(lapply(list(fig1_1, fig1_2, fig1_3), "+", margin12
                               lapply(list(fig1_45), "+", margin45), 
                               lapply(list(fig1_6, fig1_7), "+", margin12367)), layout_matrix = lay)
 #ggsave(fig1, filename = "Fig1.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
-#ggsave(fig1, filename = "D:/Fig1.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
 ```
 
 ##Data calculation for Fig1D 
 
 ```{r}
-#D1
+#Dataset 1
 load("ligands_nonhuman_d1") #the file can be downloaded from github
 ligands_nonhuman_d1$freqpenta_tcem_group = cut(x = ligands_nonhuman_d1$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d1$freqpenta_tcem),median(ligands_nonhuman_d1$freqpenta_tcem),max(ligands_nonhuman_d1$freqpenta_tcem)), labels = F, include.lowest = T, right = F) #Peptides were classified based on their TCEM’s frequency in human proteins
 table(ligands_nonhuman_d1$freqpenta_tcem_group)
@@ -332,7 +332,7 @@ fisher.test(ligands_nonhuman_d1$immunogenicity, ligands_nonhuman_d1$immunopscore
 rm(ligands_nonhuman_d1)
 
 
-#D2
+#Dataset 2
 load("ligands_nonhuman_d2") #the file can be downloaded from github
 ligands_nonhuman_d2$freqpenta_tcem_group = cut(x = ligands_nonhuman_d2$freqpenta_tcem, breaks = c(min(ligands_nonhuman_d2$freqpenta_tcem),median(ligands_nonhuman_d2$freqpenta_tcem),max(ligands_nonhuman_d2$freqpenta_tcem)), labels = F, include.lowest = T, right = F)
 table(ligands_nonhuman_d2$freqpenta_tcem_group)
@@ -353,13 +353,13 @@ fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$immunopscore
 rm(ligands_nonhuman_d2)
 ```
 
-thymocutoff = 0.914470
-
 #Fig2
-##A TCEM
+Specific naive CD8+ T cells were less likely to be present for TCEMs found rarely in human proteins (A), having low expression in cTECs (B) or low thymoproteasomal cleavage score (C).
+##A
 
 ```{r}
 load("stat_individual") #the file can be downloaded from github
+#thymocutoff = 0.914470
 df_tcemfreq = data.frame(fraction = c(stat_individual[,"tcemfreq_0_3"], stat_individual[,"tcemfreq_4_inf"]), group = rep(c("0-3","4-"), each = nrow(stat_individual)), IDs = rep(rownames(stat_individual), 2))
 
 wilcox.test(df_tcemfreq$fraction[df_tcemfreq$group == "0-3"], df_tcemfreq$fraction[df_tcemfreq$group == "4-"], paired = T)$p.value
@@ -391,7 +391,7 @@ fig2a
 rm(df_tcemfreq, stat_individual)
 ```
 
-##B EXP
+##B
 
 ```{r}
 load("stat_individual") #the file can be downloaded from github
@@ -428,7 +428,7 @@ fig2b
 rm(df_tcemexpr, stat_individual)
 ```
 
-##C TP
+##C
 
 ```{r}
 load("stat_individual") #the file can be downloaded from github
@@ -463,7 +463,7 @@ fig2c
 rm(df_thymo, stat_individual)
 ```
 
-##D IP
+##D
 
 ```{r}
 load("stat_individual") #the file can be downloaded from github
@@ -498,20 +498,19 @@ fig2d
 rm(df_immuno, stat_individual)
 ```
 
-##COMBINE
+##Fusion
 
 ```{r}
 lay = rbind(c(1,2,3,4), c(1,2,3,4))
 margin = theme(plot.margin = unit(c(0.1,0.1,0.1,.3), "cm"))
 fig2 = grid.arrange(grobs = lapply(list(fig2a,fig2b,fig2c,fig2d), "+", margin), layout_matrix = lay)
 #ggsave(fig2, filename = "Fig2.pdf", width = 22, height = 10, units = "cm", dpi = "retina")
-
 rm(lay, margin)
 ```
 
 #Fig3
-##A Similarity and TCEM frequency
-Dataset 1 és 2
+Overly dissimilar peptides to human proteins are less immunogenic.
+##A
 
 ```{r}
 load("ligands_nonhuman_d1d2") #the file can be downloaded from github
@@ -544,7 +543,7 @@ fig3a
 rm(ligands_nonhuman)
 ```
 
-##B Similarity - D1,D2
+##B
 
 ```{r}
 load("ligands_nonhuman_d1d2") #the file can be downloaded from github
@@ -583,7 +582,7 @@ fig3b
 rm(seqsimgroups, ligands_nonhuman, colorbg)
 ```
 
-##C COVID
+##C
 
 ```{r}
 load("sars_cov_similarity") #the file can be downloaded from github
@@ -617,7 +616,7 @@ fig3c
 rm(sars_simil)
 ```
 
-##COMBINE
+##Fusion
 
 ```{r}
 lay = rbind(c(1,1,2,2,2,2,3,3),c(1,1,2,2,2,2,3,3))
@@ -628,6 +627,7 @@ rm(lay, margin)
 ```
 
 #Fig4
+TCR cross-reactivity is not likely to compensate for the defects in the T cell repertoire.
 ##B
 
 ```{r}
@@ -731,10 +731,10 @@ load("expr_list_tcem") #the file can be downloaded from Mendeley Data (dx.doi.or
 load("tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 exprmeds = pbsapply(expr_list, function(x) median(x))
 rm(expr_list)
-exprcutoff = c(0.203075,1.095007)
+exprcutoff = c(0.203075,1.095007) #from fig2B
 thymomeds = pbsapply(score_list, function(x) median(x))
 rm(score_list)
-thymocutoff = 0.914470
+thymocutoff = 0.914470 #from fig2C
 keeptcems = names(pentamerfreq_tcem)[!is.na(exprmeds) & !is.na(thymomeds)]
 pentamerfreq_tcem = pentamerfreq_tcem[keeptcems]
 exprmeds = exprmeds[keeptcems]
@@ -762,7 +762,7 @@ rm(s, ind)
 stopCluster(c1)
 rm(c1)
 
-load("simmatrix_nimtcems43")
+load("simmatrix_nimtcems43") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 simmatrix_values = data.frame(value = as.numeric(simmatrix))
 
 fig4d = ggplot(simmatrix_values, aes(x = value)) + 
@@ -792,7 +792,7 @@ summary(highsimperc)
 rm(simmatrix, simmatrix_values, highsimperc)
 ```
 
-##Combine
+##Fusion
 
 ```{r}
 fig4a = readPNG("Cross_reactivity_final.png") #the file can be downloaded from github
@@ -803,10 +803,10 @@ fig4 = grid.arrange(fig4a, fig4b, fig4c, fig4d, nrow = 2, ncol = 2)
 ```
 
 #Fig5
+The effect of self-mediated positive selection on the recognition of pathogens.
 ##Objects
 
 ```{r}
-#"UP000464024" = "sarsvov2"
 species = list.files("pathogen_9mers/") #files can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1), 9-mers from each pathogen proteome
 load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 load("expr_list_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
@@ -814,8 +814,8 @@ load("tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.
 exprmedians = sapply(expr_list, FUN = function(x) median(x))
 thymomedians = sapply(score_list, FUN = function(x) median(x))
 
-exprcutoff = 0.203075
-thymocutoff = 0.914470
+exprcutoff = 0.203075 #from fig2B
+thymocutoff = 0.914470 #from fig2C
 
 fract = t(sapply(species, FUN = function(x) {
   load(paste0("pathogen_9mers/", x))
@@ -883,14 +883,10 @@ for(i in 1:length(alleles)) for(j in 1:length(species)) {
 rm(i,j,alleles,species)
 min(heatmapmtx)
 max(heatmapmtx, na.rm = T)
-
-# save(fract, file = "pathogen_fract")
-# save(heatmapmtx,file = "pathogen_heatmapmtx")
-# save(res, file = "pathogen_res")
 ```
 
 
-##A Barchart
+##A
 
 ```{r}
 load("pathogen_fract") #the file can be downloaded from github
@@ -922,7 +918,7 @@ fig5a
 rm(fract)
 ```
 
-##B Heatmap
+##B
 
 ```{r}
 load("pathogen_heatmapmtx") #the file can be downloaded from github
@@ -947,7 +943,7 @@ draw(fig5b_ch)
 rm(heatmapmtx, fig5b_ch)
 ```
 
-##C Dotplot
+##C
 
 ```{r}
 load("pathogen_fract") #the file can be downloaded from github
@@ -975,7 +971,7 @@ fig5c
 rm(fract)
 ```
 
-##D Protective and susceptible alleles
+##D
 
 ```{r}
 load("infection_risk_HLA") #the file can be downloaded from github
@@ -1013,8 +1009,7 @@ fig5d
 rm(groups,dfps)
 ```
 
-
-##Combine
+##Fusion
 
 ```{r}
 lay = cbind(c(rep(1,5),rep(2,7),rep(3,2),rep(4,2)),
@@ -1026,8 +1021,8 @@ fig5 = grid.arrange(grobs = list(fig5a,fig5b,fig5c,fig5d), layout_matrix = lay)
 ```
 
 #FigS2
-##DIVERSITY, BLOSUM distance density
-Sequences of T cell activating and non-activating epitopes have similar diversity and amino acid constitution.
+Diversity of peptide sequences
+##A
 
 ```{r}
 load("ligands_nonhuman_d2") #the file can be downloaded from github
@@ -1043,7 +1038,6 @@ pss_t_values = pss_t[upper.tri(pss_t)]
 l2 = length(pss_t_values)
 
 pss = data.frame(nonim = c(pss_nt_values, rep(NA, l2-l1)), im = pss_t_values)
-#save(pss, file = "pss")
 rm(ligands_nonhuman_d2, pss_nt, pss_t, l1, l2, pss_nt_values, pss_t_values)
 
 load("pss") #the file can be downloaded from github
@@ -1068,11 +1062,10 @@ figS2a <- ggplot(pss, aes(x=x)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 #figS2a #It is a long-time running
-#save(figS2a, file = "figs2a")
 rm(pss)
 ```
 
-##MCA plot
+##B
 
 ```{r}
 load("ligands_nonhuman_d2") #the file can be downloaded from github
@@ -1173,7 +1166,8 @@ figS2c = ggplot(df_tcem, aes(x = Dim1, y = Dim2)) +
 rm(df_full, df_tcem)
 ```
 
-##Combine
+##Fusion
+It is a long-time running...
 
 ```{r}
 lay = rbind(c(1,1,2,2),c(1,1,3,3))
@@ -1185,11 +1179,11 @@ Sys.time()
 rm(lay, margin1)
 ```
 
-#FigS3 - TCEMDISTRIB
-frequency distribution in the human proteome
-##Object
+#FigS3
+The distribution of TCEM frequency in the human proteome. 
 
 ```{r}
+#Objects
 load("objects/ligands_nonhuman_d1") #the file can be downloaded from github
 tcems_d1 = ligands_nonhuman %>%
   select(tcem, freqpenta_tcem) %>%
@@ -1213,7 +1207,6 @@ tcems = tcems_d1 %>%
   union(tcems_d2) %>%
   union(tcems_all)
 tcems$tcemsource = factor(tcems$tcemsource, levels = c("Dataset 1","Dataset 2","All possible TCEMs"))
-#save(tcems, file = "tcems")
 rm(ligands_nonhuman, tcems_d1, tcems_d2, tcems_all, pentamerfreq_tcem)
 
 #PLOT
@@ -1229,7 +1222,7 @@ table(tcems$freqpenta_tcem[tcems$tcemsource == "All possible TCEMs"])
 tcems_f = tcems[tcems$freqpenta_tcem<=50,]
 table(tcems_f$tcemsource)
 
-ggplot(tcems_f, aes(x = freqpenta_tcem, color = tcemsource, fill = tcemsource)) +
+figS3 = ggplot(tcems_f, aes(x = freqpenta_tcem, color = tcemsource, fill = tcemsource)) +
   geom_histogram(bins = 50) +
   facet_grid(rows = vars(tcemsource), scales = "free") +
   scale_x_continuous(breaks = c(seq(0,10,2),seq(25,50,25))) +
@@ -1250,12 +1243,13 @@ ggplot(tcems_f, aes(x = freqpenta_tcem, color = tcemsource, fill = tcemsource)) 
     axis.line = element_line(colour = "black"),
     strip.background = element_blank(),
     strip.placement = "outside")
-#ggsave("FigS3.jpg", width = 14, height = 14, units = "cm", dpi = "retina")
+#ggsave(figS3, filename = "FigS3.jpg", width = 14, height = 14, units = "cm", dpi = "retina")
 
 rm(tcems)
 ```
 
-#FigS4 - MS ROC
+#FigS4
+The frequency of TCEMs in human proteins predicts their presentation by HLA-I molecules on the cell surface.
 
 ```{r}
 load("ms_data_corrected2") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
@@ -1333,14 +1327,16 @@ figs_ms_2
 lay = cbind(c(1,1),c(2,2),c(2,2))
 margin1 = theme(plot.margin = unit(c(.2,.4,.2,.2), "cm"))
 margin2 = theme(plot.margin = unit(c(.2,.2,.27,.8), "cm"))
-figs4_ms = grid.arrange(grobs = c(lapply(list(figs_ms_1), "+", margin1), 
+figs4 = grid.arrange(grobs = c(lapply(list(figs_ms_1), "+", margin1), 
                               lapply(list(figs_ms_2), "+", margin2)), layout_matrix = lay)
-#ggsave(figs4_ms, filename = "figS4.png", width = 20, height = 13, units = "cm", dpi = "retina")
+#ggsave(figs4, filename = "FigS4.png", width = 20, height = 13, units = "cm", dpi = "retina")
 ```
 
-#FigS5 - Housekeeping ratio
+#FigS5
+The immunogenicity of peptides and the prevalence of TCEM-encoding housekeeping genes in different TCEM expression groups.
 
 ```{r}
+#Dataset 1
 load("ligands_nonhuman_d1") #the file can be downloaded from github
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 nb_of_groups = 20
@@ -1372,7 +1368,7 @@ figS5a = ggplot(tempdf, aes(x = group, y = hkratio)) +
 figS5a
 rm(ligands_nonhuman, tempdf)
 
-#D2
+#Dataset 2
 load("ligands_nonhuman_d2") #the file can be downloaded from github
 ligands_nonhuman %<>% filter(!is.na(pentamer_expression))
 ligands_nonhuman$pentamer_expression_group = cut(ligands_nonhuman$pentamer_expression, unique(quantile(ligands_nonhuman$pentamer_expression, seq(0,1,1/nb_of_groups), na.rm = T)), include.lowest = T, labels = F, right = F)
@@ -1402,14 +1398,16 @@ figS5b = ggplot(tempdf, aes(x = group, y = hkratio)) +
 figS5b
 rm(ligands_nonhuman, tempdf, nb_of_groups)
 
-##COMBINE
+##Fusion
 figS5 = grid.arrange(grobs = list(figS5a, figS5b), ncol = 2)
 #ggsave(figS5, filename = "FigS5.jpg", width = 22, height = 11, units = "cm", dpi = "retina")
 ```
 
-#FigS7 logreg, Table S1
+#FigS7 & Table S1
+The effects of TCEM frequency, expression and thymoproteasomal cleavage score are not confounded by and independent of each other.
 
 ```{r}
+#Dataset 1
 load("ligands_nonhuman_d1") #the file can be downloaded from github
 ligands_nonhuman_d1$immunogenicity = as.numeric(as.character(ligands_nonhuman_d1$immunogenicity))
 ligands_nonhuman_d1$pentamer_expression_group = cut(x = ligands_nonhuman_d1$pentamer_expression, breaks = c(min(ligands_nonhuman_d1$pentamer_expression,na.rm=T),quantile(ligands_nonhuman_d1$pentamer_expression,c(0.15,0.75),na.rm=T),max(ligands_nonhuman_d1$pentamer_expression,na.rm=T)), labels = F, include.lowest = T, right = F)
@@ -1467,9 +1465,8 @@ for(i in 1:nrow(resanova)) {
   resanova$pvalue[i] = tempanova$`Pr(>Chi)`[2]
 }
 rm(modelglm, modelglm1, tempanova, i)
-#save(resanova, file = "resanova_d1")
 
-#####
+#Dataset 2
 
 load("ligands_nonhuman_d2") #the file can be downloaded from github
 ligands_nonhuman_d2$immunogenicity = as.numeric(as.character(ligands_nonhuman_d2$immunogenicity))
@@ -1528,13 +1525,13 @@ for(i in 1:nrow(resanova)) {
   resanova$pvalue[i] = tempanova$`Pr(>Chi)`[2]
 }
 rm(modelglm, modelglm1, tempanova, i)
-#save(resanova, file = "resanova_d2")
 ```
 
-#FigS8 Forest plot hydrophobicity
-##D1
+#FigS8
+The effects of TCEM frequency, expression and thymoproteasomal cleavage are not confounded by the hydrophobicity of amino acids.
 
 ```{r}
+#Dataset 1
 load("ligands_nonhuman_d1") #the file can be downloaded from github
 
 ligands_nonhuman_d1$immunogenicity = as.numeric(as.character(ligands_nonhuman_d1$immunogenicity))
@@ -1577,11 +1574,7 @@ fig_forest_d1 = forest_model(modelglm_d1,
   theme(axis.text.x = element_text(size=5))
 fig_forest_d1
 
-```
-
-##D2
-
-```{r}
+#Dataset 2
 load("ligands_nonhuman_d2") #the file can be downloaded from github
 ligands_nonhuman_d2$immunogenicity = as.numeric(as.character(ligands_nonhuman_d2$immunogenicity))
 ##Hydrophobicity index - Kyte & Doolittle
@@ -1625,13 +1618,14 @@ fig_forest_d2 = forest_model(modelglm_d2,
     axis.text.x = element_text(size=5))
 fig_forest_d2
 
-fig_forest= grid.arrange(textGrob("Dataset 1"), fig_forest_d1, textGrob("Dataset 2"), fig_forest_d2, layout_matrix = rbind(c(1,1,1,1),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(3,3,3,3),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4)))
+figS8= grid.arrange(textGrob("Dataset 1"), fig_forest_d1, textGrob("Dataset 2"), fig_forest_d2, layout_matrix = rbind(c(1,1,1,1),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(2,2,2,2),c(3,3,3,3),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4),c(4,4,4,4)))
 
-#ggsave(fig_forest, filename = "figS8.png", width = 13, height = 8, units = "cm", dpi = "retina")
+#ggsave(figS8, filename = "FigS8.png", width = 13, height = 8, units = "cm", dpi = "retina")
 ```
 
-#FigS9 Secondary anchors
-##Create datasets
+#FigS9
+The effects of TCEM frequency, expression and proteasomal cleavage on immunogenicity after excluding peptides that bind to HLA molecules with secondary anchors at their TCEM region.
+##Datasets
 
 ```{r}
 load("activating_d1") #the file can be downloaded from github
@@ -1692,7 +1686,7 @@ ligands_nonhuman %<>%
 #save(ligands_nonhuman, file = "ligands_nonhuman_d1d2_wosecanc") #3930
 ```
 
-##A TCEM frequency
+##A
 
 ```{r}
 load("ligands_nonhuman_d1d2_wosecanc") #the file can be downloaded from github
@@ -1729,8 +1723,8 @@ figS9_1
 rm(ligands_nonhuman)
 ```
 
-##B Expression
-###Loess D1
+##B
+Loess D1
 
 ```{r}
 load("ligands_nonhuman_d1_wosecanc") #the file can be downloaded from github
@@ -1760,7 +1754,7 @@ figS9_2
 rm(ligands_nonhuman_d1, plotdata)
 ```
 
-###Loess D2
+Loess D2
 
 ```{r}
 load("ligands_nonhuman_d2_wosecanc") #the file can be downloaded from github
@@ -1791,7 +1785,7 @@ figS9_3
 rm(ligands_nonhuman_d2, plotdata)
 ```
 
-###Density
+Density
 
 ```{r}
 load("ligands_nonhuman_d1_wosecanc") #the file can be downloaded from github
@@ -1861,8 +1855,8 @@ figS9_45
 rm(figS9_4, figS9_5, ligands_nonhuman_d1, ligands_nonhuman_d2)
 ```
 
-##C Proteasomal cleavage
-###Thymoproteasome
+##C
+Thymoproteasome
 
 ```{r}
 load("ligands_nonhuman_d1d2_wosecanc") #the file can be downloaded from github
@@ -1898,7 +1892,7 @@ figS9_6
 rm(ligands_nonhuman)
 ```
 
-###Immunoproteasome
+Immunoproteasome
 
 ```{r}
 load("ligands_nonhuman_d1d2_wosecanc") #the file can be downloaded from github
@@ -1935,7 +1929,7 @@ figS9_7
 rm(ligands_nonhuman)
 ```
 
-##COMBINE
+##Fusion
 
 ```{r}
 lay = cbind(c(1,1,1,1),c(1,1,1,1),c(1,1,1,1),c(2,2,4,4),c(2,2,4,4),c(2,2,4,4),c(2,2,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(3,3,4,4),c(5,5,5,5),c(5,5,5,5),c(5,5,5,5),c(6,6,6,6),c(6,6,6,6),c(6,6,6,6))
@@ -1988,7 +1982,8 @@ fisher.test(ligands_nonhuman_d2$immunogenicity, ligands_nonhuman_d2$immunopscore
 
 ```
 
-#FigS10 Chowell
+#FigS10
+Peptide dissimilarity to human proteins and immunogenicity.
 
 ```{r}
 chowell = read.delim("Chowell_st_ie.txt", sep = "\t", stringsAsFactors = F) #the file can be downloaded from github
@@ -2061,11 +2056,12 @@ figS10 = ggplot(groups, aes(group_num, ratio)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 figS10
-#ggsave(figS10, filename = "figS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
+#ggsave(figS10, filename = "FigS10.png", width = 11, height = 11, units = "cm", dpi = "retina")
 rm(chowell, groups, b, b_exp, wm)
 ```
 
-#FigS11 Cross-reactivity
+#FigS11
+Cross-reactivity of the A6 TCR.
 
 ```{r}
 aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AABLOSUM62)) {
@@ -2073,7 +2069,7 @@ aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AA
 }
 
 #A6
-tbl = read.delim("A6_position_depletion_matrix.csv", sep = ",", stringsAsFactors = F) #the file can be downloaded from github
+tbl = read.delim("A6_position_depletion_matrix.csv", sep = ",", stringsAsFactors = F) #the file can be downloaded from github; The file was kindly provided by Ron S. Gejman.
 peptide = paste0(tbl$amino_acid[tbl$annotation == "target"], collapse = "")
 tbl$sequence = apply(tbl, 1, FUN = function(x) {
   seq = peptide
@@ -2086,18 +2082,16 @@ selfdist = aLign(tbl$TCEM[172], tbl$TCEM[172])
 tbl$dist = sapply(tbl$TCEM, FUN = function(x) {
   aLign(x, tbl$TCEM[172])/sqrt(selfdist*aLign(x,x))
 })
-plot(tbl$dist, tbl$value)
+
 rcorr(tbl$dist, tbl$value, type = "spearman")
 rcorr(tbl$dist, tbl$value, type = "spearman")$P
-boxplot(tbl$value ~ tbl$dist > 0.8)
-wilcox.test(tbl$value ~ tbl$dist > 0.8)
 
 figs11a = ggplot(tbl, aes(dist, value)) +
   geom_point(size = 1) +
   geom_smooth(method = "gam", se = F, color = "red") +
   geom_hline(yintercept = 1, color = "black", linetype = "dashed") +
   geom_vline(xintercept = 0.61, color = "black", linetype = "dashed") +
-  annotate(geom = "text", x = .9, y = 1.2, color = "black", size = 3, label = "paste(italic(rho), \" = 0.43, \", italic(P), \" = 5 x \", 10 ^ -9)", parse = TRUE) +
+  annotate(geom = "text", x = .9, y = 1.2, color = "black", size = 3, label = "paste(italic(rho), \" = - 0.43, \", italic(P), \" = 5 x \", 10 ^ -9)", parse = TRUE) +
   labs(tag = "A", x = "BLOSUM62 similarity between the original and the modified sequence", y = "Minigene depletion") +
   theme_bw() +
   theme(
@@ -2112,16 +2106,14 @@ figs11a = ggplot(tbl, aes(dist, value)) +
     panel.grid.minor = element_blank(),
     axis.line = element_line(colour = "black"))
 figs11a
-rm(tempcor, peptide, selfdist)
+rm(peptide, selfdist)
 
+#ROC curve
 pred = prediction(predictions = tbl$dist, labels = tbl$value < 1)
 perf = performance(pred, measure = "tpr", x.measure = "fpr")
-plot(perf)
 auc = performance(pred, measure = "auc")
-text(0.9,0.2, paste0("AUC = ", round(unlist(auc@y.values), 2)))
 tbl$status = as.character(tbl$value < 1)
 optimal.cutpoints(X = "dist", status = "status", tag.healthy = "FALSE", methods = "CB", data = tbl)
-
 df = data.frame(fpr = unlist(perf@x.values,use.names = F), tpr = unlist(perf@y.values, use.names = F))
 
 figs11b = ggplot(df, aes(fpr,tpr)) + 
@@ -2144,15 +2136,16 @@ figs11b = ggplot(df, aes(fpr,tpr)) +
 figs11b
 rm(auc, df, perf, pred, tbl, aLign)
 
-#COMBINE
+#Fusion
 figs11 = grid.arrange(grobs = list(figs11a,figs11b), ncol = 2)
 #ggsave(figs11, filename = "FigS11.png", width = 22, height = 11, units = "cm", dpi = "retina")
 ```
 
-#Table S2 - Fishers
-##D1
+#Table S2
+The effect of TCEM attributes on immunogenicity is additive. 
 
 ```{r}
+#Dataset 1
 load("ligands_nonhuman_d1") #the file can be downloaded from github
 
 #TCEMFREQ
@@ -2205,11 +2198,7 @@ dataset$group[dataset$freqpenta_tcem >= 4 & dataset$pentamer_expression >= quant
 table(dataset$group,dataset$immunogenicity)
 fisher.test(dataset$group, dataset$immunogenicity)
 
-```
-
-##D2
-
-```{r}
+#Dataset 2
 load("ligands_nonhuman_d2") #the file can be downloaded from github
 
 #TCEMFREQ
@@ -2261,10 +2250,10 @@ dataset$group[dataset$freqpenta_tcem < 4 & dataset$pentamer_expression < quantil
 dataset$group[dataset$freqpenta_tcem >= 4 & dataset$pentamer_expression >= quantile(dataset$pentamer_expression,0.15) & dataset$pentamer_expression <= quantile(dataset$pentamer_expression,0.75) & dataset$thymopscore > quantile(dataset$thymopscore,0.25)] = 2
 table(dataset$group,dataset$immunogenicity)
 fisher.test(dataset$group, dataset$immunogenicity)
-
 ```
 
-#Table S3 Aminosav
+#Table S3
+The results remained when TCEMs containing certain amino acids were excluded from the analysis.
 
 ```{r}
 proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
@@ -2286,7 +2275,7 @@ colnames(ftres) = c("or", "p")
 rm(aacomp, aacomp_im, aacomp_nim, ligands_nonhuman)
 
 
-#Excluding amino acids
+#Exclusion of amino acids
 resdf_exclaa = data.frame(aa = rownames(AABLOSUM62), 
                           freqpenta_med_im = NA, freqpenta_med_nim = NA, freqpenta_wilp = NA,
                           expr_fishor1 = NA, expr_fishp1 = NA, expr_fishor2 = NA, expr_fishp2 = NA,
@@ -2295,7 +2284,7 @@ resdf_exclaa = data.frame(aa = rownames(AABLOSUM62),
 
 for(i in 1:nrow(resdf_exclaa)) {
   load("ligands_nonhuman_d1d2")
-  ligands_nonhuman %<>% filter(!grepl(resdf_exclaa$aa[i], tcem))
+  ligands_nonhuman %<>% filter(!grepl(resdf_exclaa$aa[i], tcem)) #exclusion step
   resdf_exclaa$freqpenta_med_im[i] = ligands_nonhuman %>% filter(immunogenicity == 1) %>% pull(freqpenta_tcem) %>% median()
   resdf_exclaa$freqpenta_med_nim[i] = ligands_nonhuman %>% filter(immunogenicity == 0) %>% pull(freqpenta_tcem) %>% median()
   resdf_exclaa$freqpenta_wilp[i] = wilcox.test(freqpenta_tcem ~ immunogenicity, ligands_nonhuman)$p.value
@@ -2344,6 +2333,5 @@ rm(i)
 resdf = cbind.data.frame(freq_in_human_proteome = aafreq[rownames(aafreq) != "U",], ftres)
 resdf = cbind.data.frame(resdf, resdf_exclaa[match(rownames(resdf), resdf_exclaa$aa),])
 resdf = resdf[,c(4,1:3,5:15)]
-
 ```
 
