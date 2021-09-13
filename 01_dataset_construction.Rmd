@@ -26,19 +26,20 @@ elérési utak törlése
 
 ```{r}
 tcell_full = fread("tcell_full_v3.csv", skip = 1) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
-tcell_full = tcell_full[,c(125,12,1,11,106)]
+tcell_full = tcell_full[,c(125,12,1,11,106)] #selecting of relevant columns
 colnames(tcell_full) = c("allele", "peptide", "assay", "object_type", "qualitative_measure")
 
 tcell_filt = tcell_full %>% 
-  filter(nchar(peptide) == 9 | nchar(peptide) == 10) %>% #84,137
-  filter(object_type == "Linear peptide") %>% #83,915
-  filter(substr(allele,1,5) == "HLA-A" | substr(allele,1,5) == "HLA-B" | substr(allele,1,5) == "HLA-C") %>% #56,386
-  filter(nchar(allele) == 11) %>% #48,658
+  filter(nchar(peptide) == 9 | nchar(peptide) == 10) %>%
+  filter(object_type == "Linear peptide") %>%
+  filter(substr(allele,1,5) == "HLA-A" | substr(allele,1,5) == "HLA-B" | substr(allele,1,5) == "HLA-C") %>%
+  filter(nchar(allele) == 11) %>%
   dplyr::select(-object_type) %>% 
   transform(allele = gsub("HLA-|:|\\*", "", allele))
-tcell_filt = tcell_filt[sapply(tcell_filt$peptide, function(x) protcheck(x)),] #48,651
+tcell_filt = tcell_filt[sapply(tcell_filt$peptide, function(x) protcheck(x)),] #no. of peptides after filtering step 1 (on FigS1): 48,651
 rm(tcell_full)
 
+#Aggregating data for individual allele-peptide pairs
 activating = tcell_filt %>% 
   mutate(qm = ifelse(qualitative_measure == "Negative", "neg", "pos")) %>% 
   dplyr::select(-qualitative_measure) %>% 
@@ -49,13 +50,13 @@ activating = tcell_filt %>%
   mutate(n_activating_assay = neg+pos) %>% 
   mutate(activating_ratio = pos/n_activating_assay) %>%
   ungroup() %>% 
-  dplyr::select(-c("neg", "pos")) #30,443
+  dplyr::select(-c("neg", "pos")) #no. of peptides after filtering step 2: 30,443
 rm(tcell_filt)
 ```
 
 ##Step 3 left branch in FigS1
-Predicting HLA-binding with NetMHCpan-4.0. Selecting pairs with either < 500 nM binding affinity or 
-< 2% binding rank percentile
+Predicting HLA-binding with NetMHCpan-4.0.
+Selecting pairs with either < 500 nM binding affinity or < 2% binding rank percentile
 
 ```{r eval=FALSE, include=FALSE}
 load("binding_matrix") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
@@ -67,7 +68,7 @@ activating$bindingrp = apply(activating,1,function(x) ifelse(x[1] %in% rownames(
 rm(binding_matrix)
 ligands_raw_d1 = activating %>% 
   filter(aff<500|bindingrp<2) %>% 
-  dplyr::select(allele, peptide, n_activating_assay, activating_ratio) #no. of peptides after filtering: 21,474
+  dplyr::select(allele, peptide, n_activating_assay, activating_ratio) #no. of peptides after filtering step 3: 21,474
 ```
 
 ##Step 4 in FigS1
@@ -75,7 +76,7 @@ Keeping pairs, if T cell activation was tested in at least two assays
 
 ```{r}
 ligands_raw_d1 %<>% 
-  filter(n_activating_assay >= 2) #no. of peptides after filtering: 5,630
+  filter(n_activating_assay >= 2) #no. of peptides after filtering step 4: 5,630
 ```
 
 ##Step 5 in FigS1
@@ -85,10 +86,10 @@ Keeping pairs, if the peptide was not found in the reference human proteome
 proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 tempdf = ligands_raw_d1 %>% dplyr::select(peptide) %>% unique()
 tempdf$human = pbsapply(tempdf$peptide, function(z) any(stri_detect_fixed(proteome, z))) #TRUE - human, FALSE - nonhuman
-table(tempdf$human) #Human: 827, nonhuman: 4,462
+table(tempdf$human)
 humaneps = tempdf$peptide[tempdf$human == T]
 ligands_raw_d1 %<>% 
-  filter(!peptide %in% humaneps) #no. of peptides after filtering: 4,634
+  filter(!peptide %in% humaneps) #no. of peptides after filtering step 5: 4,634
 rm(proteome, tempdf, humaneps)
 ```
 
@@ -99,15 +100,14 @@ Defining immunogenic and nonimmunogenic pairs and excluding the ones with contro
 ligands_raw_d1$immunogenicity = NA
 ligands_raw_d1$immunogenicity[ligands_raw_d1$activating_ratio == 0] = 0
 ligands_raw_d1$immunogenicity[ligands_raw_d1$activating_ratio > .5] = 1
-ligands_raw_d1 %<>% na.omit() #no. of peptides after filtering: 4,118
-table(ligands_raw_d1$immunogenicity) #0 - 2,617; 1 - 1,501
+ligands_raw_d1 %<>% na.omit()
+table(ligands_raw_d1$immunogenicity)
 
 #Controversial assay results
 length(unique(ligands_raw_d1$peptide[duplicated(ligands_raw_d1$peptide)])) #95
 #ligands_raw_d1 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
 drop_peps = ligands_raw_d1 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #13 peptides/95
-#writeLines(drop_peps, "01out/dropped_peptides.txt")
-ligands_raw_d1 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 4,089
+ligands_raw_d1 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering step 6: 4,089
 rm(drop_peps)
 ```
 
@@ -115,7 +115,7 @@ rm(drop_peps)
 Dropping peptides that have conflicting results in pair with different alleles
 
 ```{r}
-peps = unique(ligands_raw_d1$peptide) #no. of unique peptides: 3955
+peps = unique(ligands_raw_d1$peptide)
 for(j in 1:length(peps)) {
   tempdf = ligands_raw_d1 %>% filter(peptide == peps[j])
   if(nrow(tempdf) == 1) next()
@@ -123,7 +123,7 @@ for(j in 1:length(peps)) {
   ligands_raw_d1[ligands_raw_d1$peptide == peps[j],] = tempdf
 }
 rm(peps, tempdf, j)
-ligands_raw_d1 = unique(ligands_raw_d1) #no. of peptides after filtering: 3,955
+ligands_raw_d1 = unique(ligands_raw_d1) #no. of peptides after filtering step 7: 3,955
 
 ligands_raw_d1$immunogenicity = factor(ligands_raw_d1$immunogenicity, levels = c("1","0"))
 ```
@@ -133,19 +133,20 @@ ligands_raw_d1$immunogenicity = factor(ligands_raw_d1$immunogenicity, levels = c
 
 ```{r}
 mhc_ligand_full = fread("mhc_ligand_full.csv", skip = 1) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
-mhc_ligand_full = mhc_ligand_full[,c(96,12,1,11,84)]
+mhc_ligand_full = mhc_ligand_full[,c(96,12,1,11,84)] #selecting of relevant columns
 colnames(mhc_ligand_full) = c("allele", "peptide", "assay", "object_type", "qualitative_measure")
 
 mhc_ligand_filt = mhc_ligand_full %>%
-  filter(nchar(peptide) == 9 | nchar(peptide) == 10) %>% #826,354
-  filter(object_type == "Linear peptide") %>% #826,313
-  filter(substr(allele,1,5) == "HLA-A" | substr(allele,1,5) == "HLA-B" | substr(allele,1,5) == "HLA-C") %>% #493,403
-  filter(nchar(allele) == 11) %>% #469,430
+  filter(nchar(peptide) == 9 | nchar(peptide) == 10) %>%
+  filter(object_type == "Linear peptide") %>%
+  filter(substr(allele,1,5) == "HLA-A" | substr(allele,1,5) == "HLA-B" | substr(allele,1,5) == "HLA-C") %>%
+  filter(nchar(allele) == 11) %>%
   dplyr::select(-object_type) %>% 
   transform(allele = gsub("HLA-|:|\\*", "", allele))
 mhc_ligand_filt = mhc_ligand_filt[sapply(mhc_ligand_filt$peptide, function(x) protcheck(x)),] #469,417
 rm(mhc_ligand_full)
 
+#Aggregating data for individual allele-peptide pairs
 binding = mhc_ligand_filt %>% 
   mutate(qm = ifelse(qualitative_measure == "Negative", "neg", "pos")) %>% 
   dplyr::select(-qualitative_measure) %>% 
@@ -169,10 +170,10 @@ Keeping pairs, if:
 ```{r}
 ligands_raw_d2 = binding %>% 
   left_join(activating, by = c("allele", "peptide")) %>% 
-  filter(!is.na(activating_ratio)) #no. of peptides after filtering: 6936
+  filter(!is.na(activating_ratio))
 rm(activating, binding)
 ligands_raw_d2 %<>% 
-  filter(n_binding_assay >= 2, binding_ratio > 0.6) #no. of peptides after filtering: 2,345
+  filter(n_binding_assay >= 2, binding_ratio > 0.6) #no. of peptides after filtering step 3: 2,345
 ```
 
 ##Step 4 in FigS1
@@ -180,7 +181,7 @@ Keeping pairs, if T cell activation was tested in at least two assays
 
 ```{r}
 ligands_raw_d2 %<>% 
-  filter(n_activating_assay >= 2) #no. of peptides after filtering: 1,506
+  filter(n_activating_assay >= 2) #no. of peptides after filtering step 4: 1,506
 ```
 
 ##Step 5 in FigS1
@@ -190,9 +191,9 @@ Keeping pairs, if the peptide was not found in the reference human proteome
 proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 tempdf = ligands_raw_d2 %>% dplyr::select(peptide) %>% unique()
 tempdf$human = pbsapply(tempdf$peptide, function(z) any(stri_detect_fixed(proteome, z))) #TRUE - human, FALSE - nonhuman
-table(tempdf$human) #Human: 187, nonhuman: 1,282
+table(tempdf$human)
 humaneps = tempdf$peptide[tempdf$human == T]
-ligands_raw_d2 %<>% filter(!peptide %in% humaneps) #no. of peptides after filtering: 1,318
+ligands_raw_d2 %<>% filter(!peptide %in% humaneps) #no. of peptides after filtering step 5: 1,318
 rm(proteome, tempdf, humaneps)
 ```
 
@@ -203,14 +204,14 @@ Defining immunogenic and nonimmunogenic pairs and excluding the ones with contro
 ligands_raw_d2$immunogenicity = NA
 ligands_raw_d2$immunogenicity[ligands_raw_d2$activating_ratio == 0] = 0
 ligands_raw_d2$immunogenicity[ligands_raw_d2$activating_ratio > .5] = 1
-ligands_raw_d2 = ligands_raw_d2[!is.na(ligands_raw_d2$immunogenicity),] #no. of peptides after filtering: 1,117
-table(ligands_raw_d2$immunogenicity) #0 - 485; 1 - 632
+ligands_raw_d2 = ligands_raw_d2[!is.na(ligands_raw_d2$immunogenicity),]
+table(ligands_raw_d2$immunogenicity)
 
 #Controversial assay results
-length(unique(ligands_raw_d2$peptide[duplicated(ligands_raw_d2$peptide)]))
+length(unique(ligands_raw_d2$peptide[duplicated(ligands_raw_d2$peptide)])) #19
 #ligands_raw_d2 %>% group_by(peptide) %>% dplyr::summarise(n = n(), m = mean(immunogenicity)) %>% View()
-drop_peps = ligands_raw_d2 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #1 peptide: YAQMWSLMY
-ligands_raw_d2 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering: 1,115
+drop_peps = ligands_raw_d2 %>% dplyr::group_by(peptide) %>% dplyr::summarise(m = mean(immunogenicity)) %>% filter(m > 0, m < 1) %>% pull(peptide) #1 peptide(YAQMWSLMY) / 19
+ligands_raw_d2 %<>% filter(!peptide %in% drop_peps) #no. of peptides after filtering step 6: 1,115
 rm(drop_peps)
 ```
 
@@ -218,7 +219,7 @@ rm(drop_peps)
 Dropping peptides that have conflicting results in pair with different alleles
 
 ```{r}
-peps = unique(ligands_raw_d2$peptide) #unique peptides
+peps = unique(ligands_raw_d2$peptide)
 for(j in 1:length(peps)) {
   tempdf = ligands_raw_d2 %>% filter(peptide == peps[j])
   if(nrow(tempdf) == 1) next()
@@ -226,7 +227,7 @@ for(j in 1:length(peps)) {
   ligands_raw_d2[ligands_raw_d2$peptide == peps[j],] = tempdf
 }
 rm(peps, tempdf, j)
-ligands_raw_d2 = unique(ligands_raw_d2) #no. of peptides after filtering: 1,087
+ligands_raw_d2 = unique(ligands_raw_d2) #no. of peptides after filtering step7: 1,087
 
 ligands_raw_d2$immunogenicity = factor(ligands_raw_d2$immunogenicity, levels = c("1","0"))
 ```
@@ -268,10 +269,10 @@ clomega <- function(epitopes, similarity) {
 dist_matr = clomega(epitopes = ligands_raw_d2$peptide, similarity = 0.5)
 ligands_raw_d2 %>% filter(!peptide %in% rownames(dist_matr)) %>% pull(peptide) -> dropped_eps_clo_d2 #452 peptides
 #writeLines(dropped_eps_clo_d2, "dropped_eps_clo_d2.txt")
-rm(dropped_peps_clo)
+rm(dropped_eps_clo_d2)
 
 ligands_nonhuman_d2 = ligands_raw_d2 %<>% 
-  filter(peptide %in% rownames(dist_matr)) #no. of peptides after filtering: 635
+  filter(peptide %in% rownames(dist_matr)) #no. of peptides after filtering step 8: 635
 rm(dist_matr, clomega)
 table(ligands_raw_d2$immunogenicity) #1: 360, 0: 275
 ```
@@ -280,13 +281,13 @@ table(ligands_raw_d2$immunogenicity) #1: 360, 0: 275
 Drop peptides of dataset 2
 
 ```{r}
-ligands_nonhuman_d1 = ligands_raw_d1[!ligands_raw_d1$peptide %in% ligands_nonhuman_d2$peptide,] #no. of peptides after filtering: 3,380
+ligands_nonhuman_d1 = ligands_raw_d1[!ligands_raw_d1$peptide %in% ligands_nonhuman_d2$peptide,] #no. of peptides after filtering step 8: 3,380
 table(ligands_nonhuman_d1$immunogenicity) #1 - 1,093; 0 - 2,287
 rm(ligands_raw_d1, ligands_raw_d2)
 ```
 
 #Pentamer frequency
-
+output file (pentamerfreq_tcem) can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 ```{r}
 proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 nonamers = sapply(proteome, function(x) substring(x, 1:(nchar(x)-8), 9:nchar(x)))
@@ -308,10 +309,9 @@ pentamerfreq_tcem = pentamerfreq_tcem[pentamers]
 #save(pentamerfreq_tcem, file = "pentamerfreq_tcem")
 ```
 
-
 #Sequence similarity
 You have to download and install blast from https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
-
+output file (bl62score) can be downloaded from github
 ```{r}
 source("sequence_similarity_func.R") #github
 create_db_proteome(blast_folder = "C:/NCBI/blast-2.11.0+/bin/", 
@@ -340,10 +340,10 @@ bl62score_dekamers = calcSeqSim(blastpout_loc = "blastpout_dekamers")
 load("blastpout_nonamers")
 load("blastpout_dekamers")
 bl62score = c(bl62score_nonamers, bl62score_dekamers)
-#save(bl62score, file = "bl62score")
 ```
 
 #Add other variables
+output files (ligands_nonhuman_d1, ligands_nonhuman_d2, ligands_nonhuman_d1d2) can be downloaded from github
 
 ```{r}
 ##TCEM frequency
@@ -366,7 +366,7 @@ ligands_nonhuman_d1$immunopscore = unname(pbsapply(ligands_nonhuman_d1$tcem, fun
 rm(score_list)
 
 #Blosum62 similarity score
-load("bl62score") #github
+load("bl62score") #the file can be downloaded from github
 ligands_nonhuman_d1$bl62score = unname(bl62score[match(ligands_nonhuman_d1$peptide, names(bl62score))])
 rm(bl62score)
 
@@ -380,8 +380,8 @@ rm(elements_housekeeping)
 
 ligands_nonhuman_d1 %<>% 
   select(allele, peptide, immunogenicity, tcem, freqpenta_tcem, pentamer_expression, thymopscore, immunopscore, bl62score, housekeeping_ratio)
-#save(ligands_nonhuman_d1, file = "ligands_nonhuman_d1")
 
+#Dataset 2
 ##TCEM frequency
 ligands_nonhuman_d2$tcem = unname(pbsapply(ligands_nonhuman_d2$peptide, function(x) ifelse(nchar(x) == 9, substr(x,4,8), substr(x,5,9))))
 load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
@@ -416,12 +416,11 @@ rm(elements_housekeeping)
 
 ligands_nonhuman_d2 %<>% 
   select(allele, peptide, immunogenicity, tcem, freqpenta_tcem, pentamer_expression, thymopscore, immunopscore, bl62score, housekeeping_ratio)
-#save(ligands_nonhuman_d2, file = "ligands_nonhuman_d2")
 
-#D1 & D2
-load("ligands_nonhuman_d1") #github
+#Datasets 1 & 2
+load("ligands_nonhuman_d1") #the file can be downloaded from github
 ligands_nonhuman_d1 = cbind(ligands_nonhuman_d1, dataset = "d1")
-load("ligands_nonhuman_d2") #github
+load("ligands_nonhuman_d2") #the file can be downloaded from github
 ligands_nonhuman_d2 = cbind(ligands_nonhuman_d2, dataset = "d2")
 ligands_nonhuman = rbind(ligands_nonhuman_d1, ligands_nonhuman_d2)
 rm(ligands_nonhuman_d1, ligands_nonhuman_d2)
@@ -433,6 +432,6 @@ ligands_nonhuman %<>%
     .$dataset == "d2" & .$immunogenicity == 1 ~ "d2_im",
   )) %>% 
   transform(group = factor(group, levels = c("d1_im", "d1_nim", "d2_im", "d2_nim")))
-#save(ligands_nonhuman, file = "ligands_nonhuman_d1d2")
+
 ```
 
