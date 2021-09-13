@@ -1,0 +1,35 @@
+---
+title: "generating all_iedb_frame for MCA analysis"
+author: "Manczinger M."
+date: "9/13/2021"
+output: html_document
+---
+
+The file generates all_iedb object, which forms the basis of MCA analysis needed for Fig. S2. The object contains all nonhuman 9mer sequences on IEDB
+
+```{r}
+library(data.table)
+tcell = fread("tcell_full_v3.csv", stringsAsFactors = F, skip = 1) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+tcell = tcell[nchar(tcell$Description) == 9,]
+tcell = tcell[tcell$Class == "I",]
+tcell = tcell[grepl("HLA", tcell$`Allele Name`),]
+
+library(protr)
+human_proteome = unlist(readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta")) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+
+all_iedb = unique(tcell$Description)
+library(fastmatch)
+aas = rownames(protr::AABLOSUM62)
+all_iedb = all_iedb[sapply(all_iedb, FUN = function(x) !any(is.na(fmatch(unlist(strsplit(x, "")), aas))))]
+
+library(parallel)
+c1 = makeCluster(7)
+clusterExport(c1, "human_proteome")
+
+all_iedb = all_iedb[parSapply(c1, all_iedb, FUN = function(x) !any(grepl(x, human_proteome)), USE.NAMES = F)]
+stopCluster(c1)
+
+save(all_iedb, file = "all_iedb")
+
+```
+

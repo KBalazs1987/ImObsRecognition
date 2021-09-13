@@ -1,0 +1,85 @@
+---
+title: "thymo- and immunoproteasome score"
+author: "Manczinger M."
+date: "8/9/2021"
+output: html_document
+---
+
+The script calculates the scores, which explain the probability of thymo- and immunoproteasomal cleavage for each instance of each TCEM in the human proteome. 
+
+```{r}
+
+#Immunoproteasomal cleavage
+
+library(protr)
+library(fastmatch)
+proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") # the file was downloaded from the uniprot database on 31st January 2020
+proteome = proteome[sapply(proteome, nchar) >=19]
+proteome_sub9 = sapply(proteome, FUN = function(x) substring(x, 1:(nchar(x) - 18), c(19:nchar(x))))
+proteome_sub9 = unlist(proteome_sub9, use.names = F)
+proteome_sub9 = proteome_sub9[nchar(proteome_sub9) == 19 & !grepl("U", proteome_sub9)]
+cleavage = read.delim("aa_at_cleavage_sites.txt", sep = "\t", stringsAsFactors = F) # the file was acquired from the summpementary data of DOI: 10.1038/ncomms8484
+cleavage_site_score = cleavage[,3:12]/cleavage$Substate
+indices = fmatch(unlist(strsplit(paste0(substr(proteome_sub9, 1, 10), substr(proteome_sub9, 10, 19)), ""), use.names = F), cleavage$AA)
+indices = cleavage_site_score[cbind(indices, rep(1:10, length(indices)/10))]
+indices = matrix(indices, ncol = 20, byrow = T)
+
+library(parallel)
+library(Rfast)
+
+c1 = makeCluster(7)
+scores = parApply(c1, indices, 1, Median)
+
+tcems = substr(proteome_sub9, 9, 13)
+
+elements = aggregate(scores ~ tcems, FUN = function(x) x)
+
+variations = expand.grid(rownames(AABLOSUM62), rownames(AABLOSUM62), rownames(AABLOSUM62), rownames(AABLOSUM62), rownames(AABLOSUM62))
+variations = apply(variations, 1, FUN = function(x) paste0(x, collapse = ""))
+
+score_list = as.list(rep(NA,20^5))
+names(score_list) = variations
+
+score_list[fmatch(elements[,1], names(score_list))] = sapply(elements[,2], unlist)
+
+save(score_list, file = "immunoproteasomal_cleavage_score")
+
+```
+
+```{r}
+#Thymoproteasomal cleavage
+
+library(protr)
+library(fastmatch)
+proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") # the file was downloaded from the uniprot database on 31st January 2020
+proteome = proteome[sapply(proteome, nchar) >=19]
+proteome_sub9 = sapply(proteome, FUN = function(x) substring(x, 1:(nchar(x) - 18), c(19:nchar(x))))
+proteome_sub9 = unlist(proteome_sub9, use.names = F)
+proteome_sub9 = proteome_sub9[nchar(proteome_sub9) == 19 & !grepl("U", proteome_sub9)]
+cleavage = read.delim("aa_at_cleavage_sites.txt", sep = "\t", stringsAsFactors = F) # the file was acquired from the summpementary data of DOI: 10.1038/ncomms8484
+cleavage_site_score = cleavage[,13:22]/cleavage$Substate
+indices = fmatch(unlist(strsplit(paste0(substr(proteome_sub9, 1, 10), substr(proteome_sub9, 10, 19)), ""), use.names = F), cleavage$AA)
+indices = cleavage_site_score[cbind(indices, rep(1:10, length(indices)/10))]
+indices = matrix(indices, ncol = 20, byrow = T)
+
+library(parallel)
+library(Rfast)
+
+c1 = makeCluster(7)
+scores = parApply(c1, indices, 1, Median)
+
+tcems = substr(proteome_sub9, 9, 13)
+
+elements = aggregate(scores ~ tcems, FUN = function(x) x)
+
+variations = expand.grid(rownames(AABLOSUM62), rownames(AABLOSUM62), rownames(AABLOSUM62), rownames(AABLOSUM62), rownames(AABLOSUM62))
+variations = apply(variations, 1, FUN = function(x) paste0(x, collapse = ""))
+
+score_list = as.list(rep(NA,20^5))
+names(score_list) = variations
+
+score_list[fmatch(elements[,1], names(score_list))] = sapply(elements[,2], unlist)
+
+save(score_list, file = "thymoproteasomal_cleavage_score")
+```
+
