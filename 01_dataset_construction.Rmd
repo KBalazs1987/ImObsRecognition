@@ -337,8 +337,8 @@ blastp(blast_folder = "C:/NCBI/blast-2.11.0+/bin/",
        threads = 6)
 bl62score_dekamers = calcSeqSim(blastpout_loc = "blastpout_dekamers")
 
-load("blastpout_nonamers")
-load("blastpout_dekamers")
+load("blastpout_nonamers") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+load("blastpout_dekamers") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 bl62score = c(bl62score_nonamers, bl62score_dekamers)
 ```
 
