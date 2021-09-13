@@ -394,7 +394,7 @@ rm(df_tcemfreq, stat_individual)
 ##B EXP
 
 ```{r}
-load("../articleplots_objects/stat_individual")
+load("stat_individual") #the file can be downloaded from github
 df_tcemexpr = data.frame(fraction = c(stat_individual[,"expr_1st_tertile"], stat_individual[,"expr_2nd_tertile"], stat_individual[,"expr_3rd_tertile"]), group = factor(rep(c("Low","Medium","High"), each = nrow(stat_individual)), levels = c("Low", "Medium", "High")), IDs = rep(rownames(stat_individual), 3))
 
 wilcox.test(df_tcemexpr$fraction[df_tcemexpr$group == "Low"], df_tcemexpr$fraction[df_tcemexpr$group == "Medium"], paired = T)$p.value
@@ -431,7 +431,7 @@ rm(df_tcemexpr, stat_individual)
 ##C TP
 
 ```{r}
-load("../articleplots_objects/stat_individual")
+load("stat_individual") #the file can be downloaded from github
 df_thymo = data.frame(fraction = c(stat_individual[,"thymo_1st_tertile"], (stat_individual[,"tcell_tcemthymo_2nd_tertile"] + stat_individual[,"tcell_tcemthymo_3rd_tertile"]) / (stat_individual[,"bound_tcemthymo_2nd_tertile"] + stat_individual[,"bound_tcemthymo_3rd_tertile"])), group = factor(rep(c("Low","High"), each = nrow(stat_individual)), levels = c("Low", "High")), IDs = rep(rownames(stat_individual), 2))
 
 wilcox.test(df_thymo$fraction[df_thymo$group == "Low"], df_thymo$fraction[df_thymo$group == "High"], paired = T)$p.value
@@ -466,7 +466,7 @@ rm(df_thymo, stat_individual)
 ##D IP
 
 ```{r}
-load("../articleplots_objects/stat_individual")
+load("stat_individual") #the file can be downloaded from github
 df_immuno = data.frame(fraction = c(stat_individual[,"immuno_1st_tertile"], (stat_individual[,"tcell_tcemimmuno_2nd_tertile"] + stat_individual[,"tcell_tcemimmuno_3rd_tertile"]) / (stat_individual[,"bound_tcemimmuno_2nd_tertile"] + stat_individual[,"bound_tcemimmuno_3rd_tertile"])), group = factor(rep(c("Low","High"), each = nrow(stat_individual)), levels = c("Low", "High")), IDs = rep(rownames(stat_individual), 2))
 
 wilcox.test(df_immuno$fraction[df_immuno$group == "Low"], df_immuno$fraction[df_immuno$group == "High"], paired = T)$p.value
@@ -508,7 +508,6 @@ fig2 = grid.arrange(grobs = lapply(list(fig2a,fig2b,fig2c,fig2d), "+", margin), 
 
 rm(lay, margin)
 ```
-
 
 #Fig3
 ##A Similarity and TCEM frequency
@@ -705,6 +704,7 @@ rm(auc,df,perf,pred,tbl)
 ```
 
 ##D
+simmatrix can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1) - simmatrix_nimtcems43
 
 ```{r}
 library(fastmatch)
@@ -728,10 +728,10 @@ nptcemsd12_self = sapply(nptcemsd12, FUN = function(s) aLign(s, s))
 #2 - we expected to find specific T cells in the repertoire
 load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 load("expr_list_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+load("tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 exprmeds = pbsapply(expr_list, function(x) median(x))
 rm(expr_list)
 exprcutoff = c(0.203075,1.095007)
-load("tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 thymomeds = pbsapply(score_list, function(x) median(x))
 rm(score_list)
 thymocutoff = 0.914470
@@ -762,6 +762,7 @@ rm(s, ind)
 stopCluster(c1)
 rm(c1)
 
+load("simmatrix_nimtcems43")
 simmatrix_values = data.frame(value = as.numeric(simmatrix))
 
 fig4d = ggplot(simmatrix_values, aes(x = value)) + 
@@ -808,8 +809,8 @@ fig4 = grid.arrange(fig4a, fig4b, fig4c, fig4d, nrow = 2, ncol = 2)
 #"UP000464024" = "sarsvov2"
 species = list.files("pathogen_9mers/") #files can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1), 9-mers from each pathogen proteome
 load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
-load("tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 load("expr_list_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
+load("tpr_score") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 exprmedians = sapply(expr_list, FUN = function(x) median(x))
 thymomedians = sapply(score_list, FUN = function(x) median(x))
 
