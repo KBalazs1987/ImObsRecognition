@@ -1,7 +1,7 @@
 ---
 title: "Dataset 1 and 2 creation"
 author: "Balazs Koncz"
-date: '2021 04 09 '
+date: '01 09 2021'
 output: html_document
 ---
 #Setup
@@ -305,6 +305,7 @@ names(zerofreqs) = setdiff(pentamers, names(pfreqs))
 
 pentamerfreq_tcem = c(pfreqs, zerofreqs)
 pentamerfreq_tcem = pentamerfreq_tcem[pentamers]
+rm(proteome, nonamers, pentamers, pfreqs, tcems, zerofreqs)
 ```
 
 #Sequence similarity
@@ -335,8 +336,6 @@ blastp(blast_folder = "C:/NCBI/blast-2.11.0+/bin/",
        threads = 6)
 bl62score_dekamers = calcSeqSim(blastpout_loc = "blastpout_dekamers")
 
-load("blastpout_nonamers") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
-load("blastpout_dekamers") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 bl62score = c(bl62score_nonamers, bl62score_dekamers)
 ```
 
@@ -347,7 +346,7 @@ output files (ligands_nonhuman_d1, ligands_nonhuman_d2, ligands_nonhuman_d1d2) c
 ##TCEM frequency
 ligands_nonhuman_d1$tcem = unname(pbsapply(ligands_nonhuman_d1$peptide, function(x) ifelse(nchar(x) == 9, substr(x,4,8), substr(x,5,9))))
 load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
-ligands_nonhuman_d1$freqpenta_tcem = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) pentamerfreq_tcem[fmatch(x, names(pentamerfreq_tcem))]))
+ligands_nonhuman_d1$freqpenta_tcem = pentamerfreq_tcem[ligands_nonhuman_d1$tcem]
 rm(pentamerfreq_tcem)
 
 ##Expression
@@ -373,7 +372,7 @@ load("tcem_housekeeping_stat") #the file can be downloaded from Mendeley Data (d
 elements_housekeeping %<>% 
   as.data.frame(stringsAsFactors = F) %>% 
   mutate_at(2:3, as.numeric)
-ligands_nonhuman_d1$housekeeping_ratio = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) ifelse(x %in% elements_housekeeping$motif, elements_housekeeping$housekeeping[elements_housekeeping$motif == x] / (elements_housekeeping$housekeeping[elements_housekeeping$motif == x]+elements_housekeeping$`not housekeeping`[elements_housekeeping$motif == x]),NA)))
+ligands_nonhuman_d1$housekeeping_ratio = unname(pbsapply(ligands_nonhuman_d1$tcem, function(x) ifelse(x %in% elements_housekeeping$motif, elements_housekeeping$housekeeping[elements_housekeeping$motif == x] / (elements_housekeeping$housekeeping[elements_housekeeping$motif == x]+elements_housekeeping$`not housekeeping`[elements_housekeeping$motif == x]),NA))) #It is a long-time running
 rm(elements_housekeeping)
 
 ligands_nonhuman_d1 %<>% 
@@ -383,7 +382,7 @@ ligands_nonhuman_d1 %<>%
 ##TCEM frequency
 ligands_nonhuman_d2$tcem = unname(pbsapply(ligands_nonhuman_d2$peptide, function(x) ifelse(nchar(x) == 9, substr(x,4,8), substr(x,5,9))))
 load("pentamerfreq_tcem") #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
-ligands_nonhuman_d2$freqpenta_tcem = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) pentamerfreq_tcem[fmatch(x, names(pentamerfreq_tcem))]))
+ligands_nonhuman_d2$freqpenta_tcem = pentamerfreq_tcem[ligands_nonhuman_d2$tcem]
 rm(pentamerfreq_tcem)
 
 ##Expression
@@ -409,7 +408,7 @@ load("tcem_housekeeping_stat") #the file can be downloaded from Mendeley Data (d
 elements_housekeeping %<>% 
   as.data.frame(stringsAsFactors = F) %>% 
   mutate_at(2:3, as.numeric)
-ligands_nonhuman_d2$housekeeping_ratio = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) ifelse(x %in% elements_housekeeping$motif, elements_housekeeping$housekeeping[elements_housekeeping$motif == x] / (elements_housekeeping$housekeeping[elements_housekeeping$motif == x]+elements_housekeeping$`not housekeeping`[elements_housekeeping$motif == x]),NA)))
+ligands_nonhuman_d2$housekeeping_ratio = unname(pbsapply(ligands_nonhuman_d2$tcem, function(x) ifelse(x %in% elements_housekeeping$motif, elements_housekeeping$housekeeping[elements_housekeeping$motif == x] / (elements_housekeeping$housekeeping[elements_housekeeping$motif == x]+elements_housekeeping$`not housekeeping`[elements_housekeeping$motif == x]),NA))) #It is a long-time running
 rm(elements_housekeeping)
 
 ligands_nonhuman_d2 %<>% 
