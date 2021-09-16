@@ -15,7 +15,7 @@ aLign = function(seq_1, seq_2, mtx = protr::AABLOSUM62, aas = colnames(protr::AA
 library(Rfast)
 library(protr)
 
-peptides = read.delim("peptide-detail.csv", sep = ",", stringsAsFactors = F) #the file was downloaded from https://adaptivepublic.blob.core.windows.net/publishedproject-supplements/covid-2020/ImmuneCODE-MIRA-Release002.zip
+peptides = read.delim("peptide-detail.csv", sep = ",", stringsAsFactors = F) #the file was downloaded from https://adaptivepublic.blob.core.windows.net/publishedproject-supplements/covid-2020/ImmuneCODE-MIRA-Release002.zip; the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 
 peptide_seqs = unique(unlist(strsplit(peptides$Amino.Acids, ",")))
 peptide_seqs = peptide_seqs[nchar(peptide_seqs) == 9]
@@ -57,7 +57,7 @@ topsimil = sapply(similarity, FUN = max)
 
 sars_cov_similarity = cbind(max_similarity = topsimil, number_of_indiv = colsums(tcells_found))
 
-save(sars_cov_similarity, file = "sars_cov_similarity")
+#save(sars_cov_similarity, file = "sars_cov_similarity")
 
 ```
 
