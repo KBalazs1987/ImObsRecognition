@@ -23,7 +23,7 @@ peptide_seqs = peptide_seqs[nchar(peptide_seqs) == 9]
 proteome = unlist(readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta")) #the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
 proteome = proteome[nchar(proteome) >= 9]
 all_nonamers = sapply(proteome, FUN = function(x) substring(x, 1:(nchar(x) - 8), 9 : nchar(x)))
-all_nonamers = unique(unlist(all_nonamers))
+all_nonamers = unique(unlist(all_nonamers, use.names = F))
 
 library(doParallel)
 library(fastmatch)
