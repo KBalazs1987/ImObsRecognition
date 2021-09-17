@@ -11,11 +11,11 @@ The script creates the tcem_housekeeping object, which contains for each instanc
 library(protr)
 library(fastmatch)
 
-load("genexpr_for_proteome") # the object is generated in the creation_of_expr_list_object.Rmd file
-swiss_to_ensg = read.delim("uniprot_to_hugo.tab", stringsAsFactors = F) # the file was downloaded from the uniprot database on 31st January 2020, the file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1)
-housekeeping = read.delim("HK_genes.txt", stringsAsFactors = F, header = F, sep = "\t") # the list of housekeeping genes was obtained from DOI: 10.1016/j.tig.2013.05.010
+load("genexpr_for_proteome") # The object is generated in the creation_of_expr_list_object.Rmd file.
+swiss_to_ensg = read.delim("uniprot_to_hugo.tab", stringsAsFactors = F) # the file was downloaded from the uniprot database on 31st January 2020. The file can be downloaded from Mendeley Data (dx.doi.org/10.17632/63xr979845.1).
+housekeeping = read.delim("HK_genes.txt", stringsAsFactors = F, header = F, sep = "\t") # The list of housekeeping genes was obtained from DOI: 10.1016/j.tig.2013.05.010.
 housekeeping$V1 = gsub(" ", "", housekeeping$V1)
-proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") # the file was downloaded from the uniprot database on 27th January 2020
+proteome = readFASTA("uniprot-proteome_UP000005640+reviewed_yes.fasta") # The file was downloaded from the uniprot database on 27th January 2020.
 
 swiss_to_ensg = swiss_to_ensg[sapply(proteome, nchar) >=9,]
 proteome = proteome[sapply(proteome, nchar) >=9]
