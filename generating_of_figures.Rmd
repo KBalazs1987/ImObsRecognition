@@ -1071,7 +1071,7 @@ rm(pss)
 load("ligands_nonhuman_d2") #the file can be downloaded from github
 ligands_nonhuman_d2 = ligands_nonhuman_d2[nchar(ligands_nonhuman_d2$peptide) == 9,]
 dropped_ep = readLines("dropped_eps_clo_d2.txt") #the file can be downloaded from github
-load("all_iedb") #the file can be downloaded from github
+load("all_iedb") #The object contains all nonhuman 9mer sequences on IEDB.
 
 length(unique(c(ligands_nonhuman_d2$peptide, dropped_ep[nchar(dropped_ep) == 9])))
 length(ligands_nonhuman_d2$peptide)
