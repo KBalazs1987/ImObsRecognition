@@ -1,5 +1,5 @@
 ---
-title: "generate_expr_list_object"
+title: "Creation of expr_list object"
 author: "Manczinger M."
 date: "8/9/2021"
 output: html_document
