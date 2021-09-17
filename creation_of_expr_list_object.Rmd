@@ -7,7 +7,7 @@ output: html_document
 
 This script creates the expr_list_tcem object, which contains the gene expression of each gene encoding each TCEM (see the PNAS publication for details)
 
-Please note that the created expr_list object may differ from the one uploaded to zenodo, because the data source of the GenomicFeatures and org.Hs.eg.db library could differ from the one used in the study (the original object was created on 31st January 2020)
+Please note that the created expr_list object may differ from the one uploaded to Mendeley, because the data source of the GenomicFeatures and org.Hs.eg.db library could differ from the one used in the study (the original object was created on 31st January 2020)
 
 ```{r}
 library(edgeR)
