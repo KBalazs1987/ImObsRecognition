@@ -1,5 +1,5 @@
 ---
-title: "stat_individual"
+title: "Generate data of CD8+ repertoires"
 author: "Manczinger M."
 date: "8/10/2021"
 output: html_document
@@ -34,7 +34,7 @@ subjects = intersect(subject_metadata$Experiment[subject_metadata$Cohort == "Hea
 tcells_found = t(sapply(subjects, FUN = function(x) { 
   !is.na(fmatch(peptide_seqs, unique(unlist(strsplit(peptides$Amino.Acids[peptides$Experiment == x], ",")))))
   }))
-
+#save(tcells_found, file = "tcells_found") #this file is also on github
 
 colnames(tcells_found) = peptide_seqs
 
